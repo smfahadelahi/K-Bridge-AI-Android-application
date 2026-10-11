@@ -110,15 +110,15 @@ class ConversationReducerTest {
     fun boundedContextReturnsMostRecentNonSupersededTurns() {
         val turns =
             (1..4).map { index ->
-            ConversationTurn(
-                id = "turn-$index",
-                direction = TranslationDirection.KOREAN_TO_BANGLA,
-                sourceText = "문장 $index",
-                translatedText = "বাক্য $index",
-                createdAtEpochMillis = index.toLong(),
-                status = if (index == 3) TurnStatus.SUPERSEDED else TurnStatus.READY,
-            )
-        }
+                ConversationTurn(
+                    id = "turn-$index",
+                    direction = TranslationDirection.KOREAN_TO_BANGLA,
+                    sourceText = "문장 $index",
+                    translatedText = "বাক্য $index",
+                    createdAtEpochMillis = index.toLong(),
+                    status = if (index == 3) TurnStatus.SUPERSEDED else TurnStatus.READY,
+                )
+            }
         val snapshot = ConversationSnapshot(turns = turns)
 
         assertEquals(
@@ -191,11 +191,10 @@ class ConversationReducerTest {
     private fun finalEvent(
         id: String,
         text: String,
-    ) =
-        ConversationEvent.FinalTranscriptReceived(
-            transcriptId = id,
-            direction = TranslationDirection.KOREAN_TO_BANGLA,
-            text = text,
-            timestampEpochMillis = 1_000L,
-        )
+    ) = ConversationEvent.FinalTranscriptReceived(
+        transcriptId = id,
+        direction = TranslationDirection.KOREAN_TO_BANGLA,
+        text = text,
+        timestampEpochMillis = 1_000L,
+    )
 }

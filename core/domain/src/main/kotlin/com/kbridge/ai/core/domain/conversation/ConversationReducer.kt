@@ -16,31 +16,33 @@ class ConversationReducer(
     fun reduce(
         snapshot: ConversationSnapshot,
         event: ConversationEvent,
-    ): ConversationSnapshot = when (event) {
-        ConversationEvent.StartRequested -> start(snapshot)
-        ConversationEvent.MicrophoneCaptureStarted -> microphoneStarted(snapshot)
-        ConversationEvent.MicrophonePermissionDenied -> permissionDenied(snapshot)
-        is ConversationEvent.PartialTranscriptReceived -> partialTranscript(snapshot, event.text)
-        is ConversationEvent.FinalTranscriptReceived -> finalTranscript(snapshot, event)
-        is ConversationEvent.TranslationStarted -> translationStarted(snapshot, event.turnId)
-        is ConversationEvent.TranslationCompleted -> translationCompleted(snapshot, event)
-        is ConversationEvent.ReplyGenerationStarted -> replyGenerationStarted(snapshot, event.turnId)
-        is ConversationEvent.ReplySuggestionsReady -> repliesReady(snapshot, event)
-        is ConversationEvent.ReplyGenerationSkipped -> replyGenerationSkipped(snapshot, event.turnId)
-        is ConversationEvent.SpeakRequested -> speak(snapshot, event.text)
-        ConversationEvent.PlaybackCompleted -> playbackFinished(snapshot)
-        ConversationEvent.PlaybackInterrupted -> playbackFinished(snapshot)
-        ConversationEvent.PauseRequested -> pause(snapshot)
-        ConversationEvent.ResumeRequested -> resume(snapshot)
-        ConversationEvent.StopRequested -> stop(snapshot)
-        ConversationEvent.ClearSessionRequested -> ConversationSnapshot()
-        is ConversationEvent.CancelTurnRequested -> cancelTurn(snapshot, event.turnId)
-        is ConversationEvent.RecoverableFailure -> fail(snapshot, event.message)
-        ConversationEvent.RetryRequested -> retry(snapshot)
-    }
+    ): ConversationSnapshot =
+        when (event) {
+            ConversationEvent.StartRequested -> start(snapshot)
+            ConversationEvent.MicrophoneCaptureStarted -> microphoneStarted(snapshot)
+            ConversationEvent.MicrophonePermissionDenied -> permissionDenied(snapshot)
+            is ConversationEvent.PartialTranscriptReceived -> partialTranscript(snapshot, event.text)
+            is ConversationEvent.FinalTranscriptReceived -> finalTranscript(snapshot, event)
+            is ConversationEvent.TranslationStarted -> translationStarted(snapshot, event.turnId)
+            is ConversationEvent.TranslationCompleted -> translationCompleted(snapshot, event)
+            is ConversationEvent.ReplyGenerationStarted -> replyGenerationStarted(snapshot, event.turnId)
+            is ConversationEvent.ReplySuggestionsReady -> repliesReady(snapshot, event)
+            is ConversationEvent.ReplyGenerationSkipped -> replyGenerationSkipped(snapshot, event.turnId)
+            is ConversationEvent.SpeakRequested -> speak(snapshot, event.text)
+            ConversationEvent.PlaybackCompleted -> playbackFinished(snapshot)
+            ConversationEvent.PlaybackInterrupted -> playbackFinished(snapshot)
+            ConversationEvent.PauseRequested -> pause(snapshot)
+            ConversationEvent.ResumeRequested -> resume(snapshot)
+            ConversationEvent.StopRequested -> stop(snapshot)
+            ConversationEvent.ClearSessionRequested -> ConversationSnapshot()
+            is ConversationEvent.CancelTurnRequested -> cancelTurn(snapshot, event.turnId)
+            is ConversationEvent.RecoverableFailure -> fail(snapshot, event.message)
+            ConversationEvent.RetryRequested -> retry(snapshot)
+        }
 
     private fun start(snapshot: ConversationSnapshot): ConversationSnapshot {
-        if (snapshot.phase !in setOf(
+        if (snapshot.phase !in
+            setOf(
                 ConversationPhase.IDLE,
                 ConversationPhase.STOPPED,
                 ConversationPhase.RECOVERABLE_ERROR,
@@ -55,7 +57,8 @@ class ConversationReducer(
     }
 
     private fun microphoneStarted(snapshot: ConversationSnapshot): ConversationSnapshot {
-        if (!snapshot.sessionActive || snapshot.phase !in setOf(
+        if (!snapshot.sessionActive || snapshot.phase !in
+            setOf(
                 ConversationPhase.REQUESTING_MICROPHONE_PERMISSION,
                 ConversationPhase.PAUSED,
                 ConversationPhase.WAITING_FOR_NEXT_SPEAKER,
@@ -64,11 +67,12 @@ class ConversationReducer(
             return snapshot
         }
         return snapshot.copy(
-            phase = if (snapshot.activeTurnId == null) {
-                ConversationPhase.LISTENING
-            } else {
-                ConversationPhase.FINALIZING_SENTENCE
-            },
+            phase =
+                if (snapshot.activeTurnId == null) {
+                    ConversationPhase.LISTENING
+                } else {
+                    ConversationPhase.FINALIZING_SENTENCE
+                },
             microphoneCaptureActive = true,
             recoverableError = null,
         )
@@ -107,12 +111,13 @@ class ConversationReducer(
         if (!snapshot.sessionActive || !snapshot.microphoneCaptureActive || normalized.isEmpty()) return snapshot
         if (event.transcriptId.isBlank() || event.transcriptId in snapshot.recentTranscriptIds) return snapshot
 
-        val turn = ConversationTurn(
-            id = event.transcriptId,
-            direction = event.direction,
-            sourceText = normalized,
-            createdAtEpochMillis = event.timestampEpochMillis,
-        )
+        val turn =
+            ConversationTurn(
+                id = event.transcriptId,
+                direction = event.direction,
+                sourceText = normalized,
+                createdAtEpochMillis = event.timestampEpochMillis,
+            )
         val nextTurns = (snapshot.turns + turn).takeLast(maxVisibleTurns)
         val isBusy = snapshot.activeTurnId != null
         val nextQueued = if (isBusy) snapshot.queuedTurnIds + turn.id else snapshot.queuedTurnIds
@@ -177,9 +182,10 @@ class ConversationReducer(
         val turn = snapshot.turns.find { it.id == event.turnId } ?: return snapshot
         if (turn.status !in setOf(TurnStatus.TRANSLATED, TurnStatus.GENERATING_REPLIES)) return snapshot
         return finishActiveTurn(
-            snapshot = updateTurn(snapshot, event.turnId) {
-                it.copy(replySuggestions = event.suggestions.toList(), status = TurnStatus.READY)
-            },
+            snapshot =
+                updateTurn(snapshot, event.turnId) {
+                    it.copy(replySuggestions = event.suggestions.toList(), status = TurnStatus.READY)
+                },
         )
     }
 
@@ -201,11 +207,12 @@ class ConversationReducer(
         val nextId = snapshot.queuedTurnIds.firstOrNull()
         val nextQueue = if (nextId == null) emptyList() else snapshot.queuedTurnIds.drop(1)
         return snapshot.copy(
-            phase = if (nextId != null) {
-                ConversationPhase.FINALIZING_SENTENCE
-            } else {
-                ConversationPhase.WAITING_FOR_NEXT_SPEAKER
-            },
+            phase =
+                if (nextId != null) {
+                    ConversationPhase.FINALIZING_SENTENCE
+                } else {
+                    ConversationPhase.WAITING_FOR_NEXT_SPEAKER
+                },
             activeTurnId = nextId,
             queuedTurnIds = nextQueue,
         )
@@ -215,7 +222,8 @@ class ConversationReducer(
         snapshot: ConversationSnapshot,
         text: String,
     ): ConversationSnapshot {
-        if (!snapshot.sessionActive || text.isBlank() || snapshot.phase !in setOf(
+        if (!snapshot.sessionActive || text.isBlank() || snapshot.phase !in
+            setOf(
                 ConversationPhase.WAITING_FOR_NEXT_SPEAKER,
                 ConversationPhase.LISTENING,
             )
@@ -238,7 +246,8 @@ class ConversationReducer(
     }
 
     private fun pause(snapshot: ConversationSnapshot): ConversationSnapshot {
-        if (!snapshot.sessionActive || snapshot.phase in setOf(
+        if (!snapshot.sessionActive || snapshot.phase in
+            setOf(
                 ConversationPhase.IDLE,
                 ConversationPhase.STOPPED,
                 ConversationPhase.RECOVERABLE_ERROR,
@@ -250,13 +259,18 @@ class ConversationReducer(
         return snapshot.copy(
             phase = ConversationPhase.PAUSED,
             microphoneCaptureActive = false,
-            turns = snapshot.turns.map { turn ->
-                if (turn.id in pendingIds) {
-                    turn.copy(translatedText = null, replySuggestions = emptyList(), status = TurnStatus.TRANSCRIBED)
-                } else {
-                    turn
-                }
-            },
+            turns =
+                snapshot.turns.map { turn ->
+                    if (turn.id in pendingIds) {
+                        turn.copy(
+                            translatedText = null,
+                            replySuggestions = emptyList(),
+                            status = TurnStatus.TRANSCRIBED,
+                        )
+                    } else {
+                        turn
+                    }
+                },
             interimTranscript = null,
             activeTurnId = pendingIds.firstOrNull(),
             queuedTurnIds = pendingIds.drop(1),
@@ -275,9 +289,10 @@ class ConversationReducer(
             phase = ConversationPhase.STOPPED,
             sessionActive = false,
             microphoneCaptureActive = false,
-            turns = snapshot.turns.map { turn ->
-                if (turn.id in pendingIds) turn.copy(status = TurnStatus.SUPERSEDED) else turn
-            },
+            turns =
+                snapshot.turns.map { turn ->
+                    if (turn.id in pendingIds) turn.copy(status = TurnStatus.SUPERSEDED) else turn
+                },
             interimTranscript = null,
             activeTurnId = null,
             queuedTurnIds = emptyList(),
@@ -295,9 +310,10 @@ class ConversationReducer(
         }
         if (turnId !in snapshot.queuedTurnIds) return snapshot
         return snapshot.copy(
-            turns = snapshot.turns.map { turn ->
-                if (turn.id == turnId) turn.copy(status = TurnStatus.SUPERSEDED) else turn
-            },
+            turns =
+                snapshot.turns.map { turn ->
+                    if (turn.id == turnId) turn.copy(status = TurnStatus.SUPERSEDED) else turn
+                },
             queuedTurnIds = snapshot.queuedTurnIds.filterNot { it == turnId },
         )
     }
@@ -311,9 +327,10 @@ class ConversationReducer(
         return snapshot.copy(
             phase = ConversationPhase.RECOVERABLE_ERROR,
             microphoneCaptureActive = false,
-            turns = snapshot.turns.map { turn ->
-                if (turn.id in pendingIds) turn.copy(status = TurnStatus.FAILED) else turn
-            },
+            turns =
+                snapshot.turns.map { turn ->
+                    if (turn.id in pendingIds) turn.copy(status = TurnStatus.FAILED) else turn
+                },
             interimTranscript = null,
             activeTurnId = null,
             queuedTurnIds = emptyList(),
@@ -335,7 +352,8 @@ class ConversationReducer(
         snapshot: ConversationSnapshot,
         turnId: String,
         transform: (ConversationTurn) -> ConversationTurn,
-    ): ConversationSnapshot = snapshot.copy(
-        turns = snapshot.turns.map { turn -> if (turn.id == turnId) transform(turn) else turn },
-    )
+    ): ConversationSnapshot =
+        snapshot.copy(
+            turns = snapshot.turns.map { turn -> if (turn.id == turnId) transform(turn) else turn },
+        )
 }

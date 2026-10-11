@@ -50,11 +50,12 @@ fun ConversationScreen(
     val sourceLanguage = if (koreanToBangla) R.string.korean_language else R.string.bangla_language
     val resultLabel = if (koreanToBangla) R.string.bangla_meaning else R.string.korean_reply
     val resultLanguage = if (koreanToBangla) R.string.bangla_language else R.string.korean_language
-    val resultPlaceholder = if (koreanToBangla) {
-        R.string.translation_placeholder
-    } else {
-        R.string.korean_translation_placeholder
-    }
+    val resultPlaceholder =
+        if (koreanToBangla) {
+            R.string.translation_placeholder
+        } else {
+            R.string.korean_translation_placeholder
+        }
 
     LazyColumn(
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 22.dp),
@@ -97,15 +98,17 @@ fun ConversationScreen(
         }
         item {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(22.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(22.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Box(
-                    modifier = Modifier
-                        .size(34.dp)
-                        .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                    modifier =
+                        Modifier
+                            .size(34.dp)
+                            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
@@ -160,10 +163,11 @@ fun ConversationScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     contentPadding = PaddingValues(horizontal = 18.dp, vertical = 15.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                    ),
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                        ),
                 ) {
                     Text(
                         text = stringResource(R.string.text_fallback_button),

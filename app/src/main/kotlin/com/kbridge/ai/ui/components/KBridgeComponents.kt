@@ -71,10 +71,11 @@ fun DirectionSelector(
             fontWeight = FontWeight.SemiBold,
         )
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(18.dp))
-                .padding(4.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(18.dp))
+                    .padding(4.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             DirectionOption(
@@ -104,13 +105,14 @@ private fun DirectionOption(
     onSelected: (TranslationDirection) -> Unit,
 ) {
     Surface(
-        modifier = modifier
-            .heightIn(min = 48.dp)
-            .selectable(
-                selected = selected,
-                role = Role.RadioButton,
-                onClick = { onSelected(direction) },
-            ),
+        modifier =
+            modifier
+                .heightIn(min = 48.dp)
+                .selectable(
+                    selected = selected,
+                    role = Role.RadioButton,
+                    onClick = { onSelected(direction) },
+                ),
         shape = RoundedCornerShape(14.dp),
         color = if (selected) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant,
         tonalElevation = if (selected) 1.dp else 0.dp,
@@ -122,11 +124,12 @@ private fun DirectionOption(
             Text(
                 text = stringResource(label),
                 style = MaterialTheme.typography.labelLarge,
-                color = if (selected) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
+                color =
+                    if (selected) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                 fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
             )
         }
@@ -157,9 +160,10 @@ fun StatusPill(
                 )
             } else {
                 Box(
-                    modifier = Modifier
-                        .size(7.dp)
-                        .background(MaterialTheme.colorScheme.secondary, CircleShape),
+                    modifier =
+                        Modifier
+                            .size(7.dp)
+                            .background(MaterialTheme.colorScheme.secondary, CircleShape),
                 )
             }
             Text(

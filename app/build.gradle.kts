@@ -7,32 +7,37 @@ plugins {
     alias(libs.plugins.ktlint)
 }
 
-val androidSdkDirectory = listOf("ANDROID_HOME", "ANDROID_SDK_ROOT")
-    .firstNotNullOfOrNull { System.getenv(it)?.let(::File) }
-val latestInstalledStableSdk = androidSdkDirectory
-    ?.resolve("platforms")
-    ?.listFiles()
-    ?.mapNotNull { platform ->
-        Regex("android-(\\d+)").matchEntire(platform.name)?.groupValues?.get(1)?.toIntOrNull()
-    }
-    ?.maxOrNull()
-val selectedCompileSdk = providers.gradleProperty("androidCompileSdk").orNull?.toInt()
-    ?: providers.environmentVariable("ANDROID_COMPILE_SDK").orNull?.toInt()
-    ?: latestInstalledStableSdk
-    ?: 36
-val selectedTargetSdk = providers.gradleProperty("androidTargetSdk").orNull?.toInt()
-    ?: providers.environmentVariable("ANDROID_TARGET_SDK").orNull?.toInt()
-    ?: selectedCompileSdk
+val androidSdkDirectory =
+    listOf("ANDROID_HOME", "ANDROID_SDK_ROOT")
+        .firstNotNullOfOrNull { System.getenv(it)?.let(::File) }
+val latestInstalledStableSdk =
+    androidSdkDirectory
+        ?.resolve("platforms")
+        ?.listFiles()
+        ?.mapNotNull { platform ->
+            Regex("android-(\\d+)").matchEntire(platform.name)?.groupValues?.get(1)?.toIntOrNull()
+        }
+        ?.maxOrNull()
+val selectedCompileSdk =
+    providers.gradleProperty("androidCompileSdk").orNull?.toInt()
+        ?: providers.environmentVariable("ANDROID_COMPILE_SDK").orNull?.toInt()
+        ?: latestInstalledStableSdk
+        ?: 36
+val selectedTargetSdk =
+    providers.gradleProperty("androidTargetSdk").orNull?.toInt()
+        ?: providers.environmentVariable("ANDROID_TARGET_SDK").orNull?.toInt()
+        ?: selectedCompileSdk
 val releaseStorePath = providers.environmentVariable("KBRIDGE_RELEASE_STORE_FILE").orNull
 val releaseStorePassword = providers.environmentVariable("KBRIDGE_RELEASE_STORE_PASSWORD").orNull
 val releaseKeyAlias = providers.environmentVariable("KBRIDGE_RELEASE_KEY_ALIAS").orNull
 val releaseKeyPassword = providers.environmentVariable("KBRIDGE_RELEASE_KEY_PASSWORD").orNull
-val hasReleaseSigning = listOf(
-    releaseStorePath,
-    releaseStorePassword,
-    releaseKeyAlias,
-    releaseKeyPassword,
-).all { !it.isNullOrBlank() }
+val hasReleaseSigning =
+    listOf(
+        releaseStorePath,
+        releaseStorePassword,
+        releaseKeyAlias,
+        releaseKeyPassword,
+    ).all { !it.isNullOrBlank() }
 
 android {
     namespace = "com.kbridge.ai"

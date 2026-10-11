@@ -44,9 +44,10 @@ fun TextTranslatorScreen(
     var draft by rememberSaveable { mutableStateOf("") }
 
     Column(
-        modifier = Modifier
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 22.dp),
+        modifier =
+            Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 22.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         ScreenHeading(
@@ -66,25 +67,27 @@ fun TextTranslatorScreen(
             minLines = 4,
             maxLines = 8,
             shape = RoundedCornerShape(18.dp),
-            keyboardOptions = KeyboardOptions(
-                capitalization = KeyboardCapitalization.Sentences,
-                imeAction = ImeAction.Done,
-            ),
-            trailingIcon = if (draft.isNotEmpty()) {
-                {
-                    IconButton(
-                        onClick = { draft = "" },
-                        modifier = Modifier.padding(4.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Clear,
-                            contentDescription = stringResource(R.string.clear_button),
-                        )
+            keyboardOptions =
+                KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Sentences,
+                    imeAction = ImeAction.Done,
+                ),
+            trailingIcon =
+                if (draft.isNotEmpty()) {
+                    {
+                        IconButton(
+                            onClick = { draft = "" },
+                            modifier = Modifier.padding(4.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Clear,
+                                contentDescription = stringResource(R.string.clear_button),
+                            )
+                        }
                     }
-                }
-            } else {
-                null
-            },
+                } else {
+                    null
+                },
         )
         Surface(
             modifier = Modifier.fillMaxWidth(),

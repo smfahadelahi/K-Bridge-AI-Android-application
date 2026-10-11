@@ -74,10 +74,11 @@ data class ConversationSnapshot(
     fun boundedContext(maxTurns: Int = DEFAULT_CONTEXT_TURN_LIMIT): ConversationContext {
         require(maxTurns >= 0) { "maxTurns must be non-negative" }
         return ConversationContext(
-            turns = turns
-                .filter { it.status != TurnStatus.SUPERSEDED && it.status != TurnStatus.FAILED }
-                .filter { it.translatedText != null }
-                .takeLast(maxTurns),
+            turns =
+                turns
+                    .filter { it.status != TurnStatus.SUPERSEDED && it.status != TurnStatus.FAILED }
+                    .filter { it.translatedText != null }
+                    .takeLast(maxTurns),
         )
     }
 

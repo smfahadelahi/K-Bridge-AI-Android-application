@@ -61,21 +61,24 @@ fun KBridgeApp() {
         },
     ) { innerPadding ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
         ) {
             when (selectedDestination) {
-                AppDestination.CONVERSATION -> ConversationScreen(
-                    direction = direction,
-                    onDirectionChanged = { direction = it },
-                    onOpenTranslator = { selectedDestination = AppDestination.TRANSLATE },
-                )
+                AppDestination.CONVERSATION ->
+                    ConversationScreen(
+                        direction = direction,
+                        onDirectionChanged = { direction = it },
+                        onOpenTranslator = { selectedDestination = AppDestination.TRANSLATE },
+                    )
 
-                AppDestination.TRANSLATE -> TextTranslatorScreen(
-                    direction = direction,
-                    onDirectionChanged = { direction = it },
-                )
+                AppDestination.TRANSLATE ->
+                    TextTranslatorScreen(
+                        direction = direction,
+                        onDirectionChanged = { direction = it },
+                    )
 
                 AppDestination.PRACTICE -> PracticeScreen()
                 AppDestination.SAVED -> SavedScreen()
@@ -89,11 +92,12 @@ fun KBridgeApp() {
 private fun AppHeader() {
     Column {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface)
-                .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(horizontal = 20.dp, vertical = 12.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surface)
+                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Surface(
@@ -167,13 +171,14 @@ private fun AppNavigationBar(
                     )
                 },
                 label = { Text(stringResource(destination.label)) },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    selectedTextColor = MaterialTheme.colorScheme.primary,
-                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                ),
+                colors =
+                    NavigationBarItemDefaults.colors(
+                        selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                        indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
             )
         }
     }

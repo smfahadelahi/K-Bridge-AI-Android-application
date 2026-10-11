@@ -30,9 +30,10 @@ import com.kbridge.ai.ui.components.ScreenHeading
 @Composable
 fun PracticeScreen() {
     Column(
-        modifier = Modifier
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 22.dp),
+        modifier =
+            Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 22.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         ScreenHeading(
@@ -90,9 +91,10 @@ private fun PlannedScenarioChip(label: Int) {
 @Composable
 fun SavedScreen() {
     Column(
-        modifier = Modifier
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 22.dp),
+        modifier =
+            Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 22.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         ScreenHeading(
