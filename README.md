@@ -34,7 +34,7 @@ The debug APK is written to `app/build/outputs/apk/debug/app-debug.apk`. Install
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-By default, Gradle selects the highest numbered Android platform installed in `ANDROID_HOME` / `ANDROID_SDK_ROOT`, then applies that API to both `compileSdk` and `targetSdk`. CI discovers and installs from the stable SDK channel. If a preview platform is installed locally, pin the current stable API explicitly with `-PandroidCompileSdk=<api> -PandroidTargetSdk=<api>` or `ANDROID_COMPILE_SDK` / `ANDROID_TARGET_SDK`. If no SDK platform is installed, the development fallback is API 36. `minSdk` remains API 31.
+By default, Gradle selects the highest numbered Android platform installed in `ANDROID_HOME` / `ANDROID_SDK_ROOT`, then applies that API to both `compileSdk` and `targetSdk`. CI selects the highest platform pre-installed on the pinned runner image; if a preview platform is installed locally, pin the current stable API explicitly with `-PandroidCompileSdk=<api> -PandroidTargetSdk=<api>` or `ANDROID_COMPILE_SDK` / `ANDROID_TARGET_SDK`. If no SDK platform is installed, the development fallback is API 36. `minSdk` remains API 31.
 
 ## Release signing
 

@@ -6,7 +6,7 @@
 
 ## 1. First increment delivered
 
-- Kotlin Android app with Jetpack Compose and Material 3, `minSdk = 31`; Gradle selects the highest numbered installed platform, with API 36 as a fallback. CI resolves packages from the stable SDK channel.
+- Kotlin Android app with Jetpack Compose and Material 3, `minSdk = 31`; Gradle selects the highest numbered installed platform, with API 36 as a fallback. CI selects the highest platform pre-installed on its pinned runner image.
 - Bengali (`values-bn`) strings and English default strings; five reachable sections: conversation, text entry, practice roadmap, saved-phrase empty state, and readiness/privacy.
 - Pure Kotlin `:core:domain` module containing the conversation phases/events/reducer, transcript de-duplication, queued turns, bounded context, and injectable engine contracts.
 - Domain unit tests and Compose instrumentation tests for truthful unavailable states.

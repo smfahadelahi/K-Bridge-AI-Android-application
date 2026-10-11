@@ -28,16 +28,18 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v4.0.4
 
-      - name: Install latest stable Android SDK
+      - name: Select latest stable Android SDK on the runner
         run: |
           set -euo pipefail
-          packages="$(sdkmanager --list --channel=0 2>/dev/null || sdkmanager --list 2>/dev/null || true)"
-          platform="$(printf '%s\n' "$packages" | grep -Eo 'platforms;android-[0-9]+' | sed 's/.*android-//' | sort -nu | tail -n 1 || true)"
-          build_tools="$(printf '%s\n' "$packages" | grep -Eo 'build-tools;[0-9]+\.[0-9]+\.[0-9]+' | sed 's/.*;//' | sort -V | tail -n 1 || true)"
-          platform="${platform:-36}"
-          build_tools="${build_tools:-36.0.0}"
-          echo "Installing Android API $platform and Build Tools $build_tools."
-          sdkmanager "platform-tools" "platforms;android-$platform" "build-tools;$build_tools"
+          sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          test -n "$sdk_root"
+          platform="$(find "$sdk_root/platforms" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' \
+            | sed -nE 's/^android-([0-9]+)$/\1/p' | sort -nu | tail -n 1)"
+          if [ -z "$platform" ]; then
+            echo "::error::No stable Android SDK platform is installed on the runner."
+            exit 1
+          fi
+          echo "Using installed Android API $platform."
           printf 'ANDROID_COMPILE_SDK=%s\nANDROID_TARGET_SDK=%s\n' "$platform" "$platform" >> "$GITHUB_ENV"
 
       - name: Run Kotlin checks, unit tests, lint, and debug build
