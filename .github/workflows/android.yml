@@ -47,10 +47,10 @@ jobs:
           set -euo pipefail
           format_log="$RUNNER_TEMP/ktlint-format.log"
           emit_format_patch() {
-            patch_base64="$(git diff --binary | base64 -w0)"
+            patch_base64="$(git diff --binary | gzip -c | base64 -w0)"
             if [ -n "$patch_base64" ]; then
               printf '%s' "$patch_base64" | fold -w 3000 | while IFS= read -r chunk; do
-                echo "::notice title=KtLint formatted patch::$chunk"
+                echo "::notice title=KtLint formatted patch (gzip+base64)::$chunk"
               done
             else
               echo "::notice title=KtLint formatted patch::No formatting changes."
