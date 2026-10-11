@@ -59,12 +59,27 @@ jobs:
         if: ${{ failure() && steps.gradle_checks.outcome == 'failure' }}
         shell: bash
         run: |
-          tail_text="$(tail -n 18 "$RUNNER_TEMP/gradle-build.log" | tr '\n' ' ' | cut -c1-3500)"
-          echo "::error title=Gradle build failure tail::$tail_text"
+          summary="$(grep -E -A 8 'FAILURE:|\* What went wrong:|^e: | FAILED$|^Could not |^Plugin \[id:' \
+            "$RUNNER_TEMP/gradle-build.log" | tail -n 45 || true)"
+          if [ -z "$summary" ]; then
+            summary="$(tail -n 35 "$RUNNER_TEMP/gradle-build.log")"
+          fi
+          tail_text="$(printf '%s' "$summary" | tr '\n' ' ' | cut -c1-3500)"
+          echo "::error title=Gradle build failure summary::$tail_text"
           {
-            echo "### Gradle build failure tail"
-            tail -n 18 "$RUNNER_TEMP/gradle-build.log"
+            echo "### Gradle build failure summary"
+            printf '%s\n' "$summary"
+            echo "### Gradle build log tail"
+            tail -n 30 "$RUNNER_TEMP/gradle-build.log"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload Gradle log on failure
+        if: ${{ failure() && steps.gradle_checks.outcome == 'failure' }}
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: gradle-build-failure-log
+          path: ${{ runner.temp }}/gradle-build.log
+          if-no-files-found: error
 
       - name: Run Compose UI tests on Android 15
         uses: reactivecircus/android-emulator-runner@v2.38.0
