@@ -16,13 +16,13 @@ val latestInstalledStableSdk = androidSdkDirectory
         Regex("android-(\\d+)").matchEntire(platform.name)?.groupValues?.get(1)?.toIntOrNull()
     }
     ?.maxOrNull()
-val compileSdkVersion = providers.gradleProperty("androidCompileSdk").orNull?.toInt()
+val selectedCompileSdk = providers.gradleProperty("androidCompileSdk").orNull?.toInt()
     ?: providers.environmentVariable("ANDROID_COMPILE_SDK").orNull?.toInt()
     ?: latestInstalledStableSdk
     ?: 36
-val targetSdkVersion = providers.gradleProperty("androidTargetSdk").orNull?.toInt()
+val selectedTargetSdk = providers.gradleProperty("androidTargetSdk").orNull?.toInt()
     ?: providers.environmentVariable("ANDROID_TARGET_SDK").orNull?.toInt()
-    ?: compileSdkVersion
+    ?: selectedCompileSdk
 val releaseStorePath = providers.environmentVariable("KBRIDGE_RELEASE_STORE_FILE").orNull
 val releaseStorePassword = providers.environmentVariable("KBRIDGE_RELEASE_STORE_PASSWORD").orNull
 val releaseKeyAlias = providers.environmentVariable("KBRIDGE_RELEASE_KEY_ALIAS").orNull
@@ -36,12 +36,12 @@ val hasReleaseSigning = listOf(
 
 android {
     namespace = "com.kbridge.ai"
-    compileSdk = compileSdkVersion
+    compileSdk = selectedCompileSdk
 
     defaultConfig {
         applicationId = "com.kbridge.ai"
         minSdk = 31
-        targetSdk = targetSdkVersion
+        targetSdk = selectedTargetSdk
         versionCode = 1
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
