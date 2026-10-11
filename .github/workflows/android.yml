@@ -87,13 +87,36 @@ jobs:
           if-no-files-found: error
 
       - name: Run Compose UI tests on Android 15
+        id: compose_tests
         uses: reactivecircus/android-emulator-runner@v2.38.0
         with:
           api-level: 35
           target: google_apis
           arch: x86_64
           disable-animations: true
-          script: ./gradlew --no-daemon --stacktrace connectedDebugAndroidTest
+          script: |
+            set -o pipefail
+            ./gradlew --no-daemon --stacktrace --console=plain connectedDebugAndroidTest 2>&1 \
+              | tee "$RUNNER_TEMP/compose-ui-test.log"
+
+      - name: Surface Compose UI test failure details
+        if: ${{ failure() && steps.compose_tests.outcome == 'failure' }}
+        shell: bash
+        run: |
+          test_log="$RUNNER_TEMP/compose-ui-test.log"
+          summary="$(grep -E -A 8 'FAILURE:|\* What went wrong:|^e: |FAILED$|failed|Failed|Tests run:|INSTRUMENTATION_STATUS|No tests found' \
+            "$test_log" | tail -n 80 || true)"
+          if [ -z "$summary" ]; then
+            summary="$(tail -n 80 "$test_log")"
+          fi
+          tail_text="$(printf '%s' "$summary" | tr '\n' ' ' | cut -c1-7000)"
+          echo "::error title=Compose UI test failure summary::$tail_text"
+          {
+            echo "### Compose UI test failure summary"
+            printf '%s\n' "$summary"
+            echo "### Compose UI test log tail"
+            tail -n 50 "$test_log"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v7.0.2
