@@ -43,14 +43,28 @@ jobs:
           printf 'ANDROID_COMPILE_SDK=%s\nANDROID_TARGET_SDK=%s\n' "$platform" "$platform" >> "$GITHUB_ENV"
 
       - name: Run Kotlin checks, unit tests, lint, and debug build
-        run: >-
-          ./gradlew --no-daemon --stacktrace
-          :core:domain:ktlintCheck
-          :app:ktlintCheck
-          :core:domain:test
-          :app:testDebugUnitTest
-          :app:lintDebug
-          :app:assembleDebug
+        id: gradle_checks
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew --no-daemon --stacktrace --console=plain \
+            :core:domain:ktlintCheck \
+            :app:ktlintCheck \
+            :core:domain:test \
+            :app:testDebugUnitTest \
+            :app:lintDebug \
+            :app:assembleDebug 2>&1 | tee "$RUNNER_TEMP/gradle-build.log"
+
+      - name: Surface Gradle failure details
+        if: ${{ failure() && steps.gradle_checks.outcome == 'failure' }}
+        shell: bash
+        run: |
+          tail_text="$(tail -n 18 "$RUNNER_TEMP/gradle-build.log" | tr '\n' ' ' | cut -c1-3500)"
+          echo "::error title=Gradle build failure tail::$tail_text"
+          {
+            echo "### Gradle build failure tail"
+            tail -n 18 "$RUNNER_TEMP/gradle-build.log"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Run Compose UI tests on Android 15
         uses: reactivecircus/android-emulator-runner@v2.38.0
