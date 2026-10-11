@@ -46,21 +46,25 @@ jobs:
         run: |
           set -euo pipefail
           format_log="$RUNNER_TEMP/ktlint-format.log"
+          emit_format_patch() {
+            patch_base64="$(git diff --binary | base64 -w0)"
+            if [ -n "$patch_base64" ]; then
+              printf '%s' "$patch_base64" | fold -w 3000 | while IFS= read -r chunk; do
+                echo "::notice title=KtLint formatted patch::$chunk"
+              done
+            else
+              echo "::notice title=KtLint formatted patch::No formatting changes."
+            fi
+          }
           if ! ./gradlew --no-daemon --console=plain :core:domain:ktlintFormat :app:ktlintFormat >"$format_log" 2>&1; then
             cat "$format_log"
+            emit_format_patch
             tail_text="$(tail -n 40 "$format_log" | tr '\n' ' ' | cut -c1-7000)"
             echo "::error title=KtLint format failure::$tail_text"
             exit 1
           fi
           cat "$format_log"
-          patch_base64="$(git diff --binary | base64 -w0)"
-          if [ -n "$patch_base64" ]; then
-            printf '%s' "$patch_base64" | fold -w 3000 | while IFS= read -r chunk; do
-              echo "::notice title=KtLint formatted patch::$chunk"
-            done
-          else
-            echo "::notice title=KtLint formatted patch::No formatting changes."
-          fi
+          emit_format_patch
 
       - name: Run Kotlin checks, unit tests, lint, and debug build
         id: gradle_checks
