@@ -59,7 +59,7 @@ jobs:
         if: ${{ failure() && steps.gradle_checks.outcome == 'failure' }}
         shell: bash
         run: |
-          ktlint_reports="$(find . -path '*/build/reports/ktlint/*Check.txt' -type f -print -exec cat {} \; 2>/dev/null || true)"
+          ktlint_reports="$(find . -path '*/build/reports/ktlint/*Check.txt' -type f -size +0c -print -exec cat {} \; 2>/dev/null || true)"
           if [ -n "$ktlint_reports" ]; then
             summary="$ktlint_reports"
           else
