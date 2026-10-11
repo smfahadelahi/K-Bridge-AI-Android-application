@@ -42,6 +42,19 @@ jobs:
           echo "Using installed Android API $platform."
           printf 'ANDROID_COMPILE_SDK=%s\nANDROID_TARGET_SDK=%s\n' "$platform" "$platform" >> "$GITHUB_ENV"
 
+      - name: Temporarily format Kotlin and emit the patch for review
+        run: |
+          set -euo pipefail
+          ./gradlew --no-daemon --console=plain ktlintFormat
+          patch_base64="$(git diff --binary | base64 -w0)"
+          if [ -n "$patch_base64" ]; then
+            printf '%s' "$patch_base64" | fold -w 3000 | while IFS= read -r chunk; do
+              echo "::notice title=KtLint formatted patch::$chunk"
+            done
+          else
+            echo "::notice title=KtLint formatted patch::No formatting changes."
+          fi
+
       - name: Run Kotlin checks, unit tests, lint, and debug build
         id: gradle_checks
         shell: bash
