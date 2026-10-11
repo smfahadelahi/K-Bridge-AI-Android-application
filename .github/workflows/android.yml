@@ -59,8 +59,13 @@ jobs:
         if: ${{ failure() && steps.gradle_checks.outcome == 'failure' }}
         shell: bash
         run: |
-          summary="$(grep -E -A 8 'FAILURE:|\* What went wrong:|^e: | FAILED$|^Could not |^Plugin \[id:' \
-            "$RUNNER_TEMP/gradle-build.log" | tail -n 45 || true)"
+          ktlint_reports="$(find . -path '*/build/reports/ktlint/*Check.txt' -type f -print -exec cat {} \; 2>/dev/null || true)"
+          if [ -n "$ktlint_reports" ]; then
+            summary="$ktlint_reports"
+          else
+            summary="$(grep -E -A 8 'FAILURE:|\* What went wrong:|^e: | FAILED$|^Could not |^Plugin \[id:' \
+              "$RUNNER_TEMP/gradle-build.log" | tail -n 45 || true)"
+          fi
           if [ -z "$summary" ]; then
             summary="$(tail -n 35 "$RUNNER_TEMP/gradle-build.log")"
           fi
