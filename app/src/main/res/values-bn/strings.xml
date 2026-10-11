@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">কে-ব্রিজ এআই</string>
+    <string name="app_tagline">কোরিয়ান • বাংলা • একসাথে</string>
+    <string name="tab_conversation">কথোপকথন</string>
+    <string name="tab_translate">অনুবাদ</string>
+    <string name="tab_practice">অনুশীলন</string>
+    <string name="tab_saved">সংরক্ষিত</string>
+    <string name="tab_settings">সেটিংস</string>
+
+    <string name="conversation_title">শুনুন, বুঝুন, উত্তর দিন</string>
+    <string name="conversation_subtitle">কোরিয়ান ও বাংলায় স্বচ্ছন্দে কথা বলার সহায়ক।</string>
+    <string name="live_conversation_label">লাইভ কথোপকথন</string>
+    <string name="foundation_badge">প্রাথমিক সংস্করণ</string>
+    <string name="microphone_off">মাইক্রোফোন বন্ধ</string>
+    <string name="microphone_status_heading">সেশনের অবস্থা</string>
+    <string name="voice_engine_missing">ভয়েস ইঞ্জিন যুক্ত করা হয়নি</string>
+    <string name="voice_engine_missing_body">এই সংস্করণে মাইক্রোফোনের অনুমতি চাওয়া বা অডিও ধারণ করা হয় না। প্রকৃত স্পিচ ইঞ্জিন যুক্ত হলে কথার লেখা এখানে দেখা যাবে।</string>
+    <string name="direction_label">কথার ভাষার দিক</string>
+    <string name="direction_korean_to_bangla">한국어 → বাংলা</string>
+    <string name="direction_bangla_to_korean">বাংলা → 한국어</string>
+    <string name="korean_speaker">কোরিয়ান বক্তা</string>
+    <string name="bangla_speaker">বাংলাভাষী বক্তা</string>
+    <string name="bangla_meaning">বাংলা অর্থ</string>
+    <string name="korean_reply">কোরিয়ান উত্তর</string>
+    <string name="korean_language">কোরিয়ান</string>
+    <string name="bangla_language">বাংলা</string>
+    <string name="transcript_placeholder">এই সংস্করণে কোনো কথা রেকর্ড করা হয়নি।</string>
+    <string name="translation_placeholder">অনুবাদ ইঞ্জিন যুক্ত হলে এখানে স্থানীয় অনুবাদ দেখা যাবে।</string>
+    <string name="korean_translation_placeholder">স্থানীয় ইঞ্জিন যুক্ত হলে এখানে স্বাভাবিক কোরিয়ান অনুবাদ দেখা যাবে।</string>
+    <string name="reply_placeholder">প্রকৃত অনুবাদের পর স্বাভাবিক উত্তরের পরামর্শ দেখা যাবে।</string>
+    <string name="reply_label">উত্তরের পরামর্শ</string>
+    <string name="text_fallback_button">লেখা দিয়ে চেষ্টা করুন</string>
+    <string name="text_fallback_hint">লেখা টাইপ করা যাবে; অনুবাদ সুবিধা এখনো যুক্ত হয়নি।</string>
+
+    <string name="translator_title">লেখা অনুবাদ</string>
+    <string name="translator_subtitle">কথা বা বাক্য লিখুন কিংবা পেস্ট করুন। এই সংস্করণে কোনো সেবায় পাঠানো হয় না।</string>
+    <string name="source_text_label">অনুবাদের জন্য লেখা</string>
+    <string name="translation_result_label">অনুবাদ</string>
+    <string name="translation_unavailable_title">স্থানীয় অনুবাদ চালু নেই</string>
+    <string name="translation_unavailable_body">কোরিয়ান–বাংলা অনুবাদের কোনো মডেল ইনস্টল করা নেই। আপনার লেখা এই পর্দাতেই থাকবে; অনুবাদ তৈরি বা কোনো সেবায় পাঠানো হবে না।</string>
+    <string name="translate_button">অনুবাদ পাওয়া যাচ্ছে না</string>
+    <string name="clear_button">লেখা মুছুন</string>
+    <string name="swap_direction_description">অনুবাদের দিক বদলান</string>
+
+    <string name="practice_title">দৈনন্দিন জীবনের অনুশীলন</string>
+    <string name="practice_subtitle">ছোট ও দরকারি অনুশীলন কথোপকথনে সহায়তা করবে—বাধা দেবে না।</string>
+    <string name="practice_next_title">অনুশীলনের সুবিধাগুলো পরে যুক্ত হবে</string>
+    <string name="practice_next_body">পরিস্থিতিভিত্তিক কথোপকথন, উচ্চারণ অনুশীলন ও বিরতি দিয়ে পুনরাবৃত্তি এই প্রাথমিক সংস্করণে চালু নেই। যাচাই করা কোরিয়ান ও বাংলা বিষয়বস্তু ব্যবহার করা হবে; অগ্রগতির ভুয়া তথ্য দেখানো হবে না।</string>
+    <string name="planned_situations">পরিকল্পিত অনুশীলনের পরিস্থিতি</string>
+    <string name="scenario_workplace">কর্মস্থল</string>
+    <string name="scenario_transport">যাতায়াত</string>
+    <string name="scenario_clinic">ক্লিনিক</string>
+    <string name="scenario_housing">বাসস্থান</string>
+
+    <string name="saved_title">সংরক্ষিত বাক্য</string>
+    <string name="saved_subtitle">দরকারি শব্দ ও বাক্য কাছে রাখুন।</string>
+    <string name="saved_empty_title">এখনো কিছু সংরক্ষণ করা হয়নি</string>
+    <string name="saved_empty_body">বাক্য সংরক্ষণ ও পুনরাবৃত্তির সুবিধা এই সংস্করণে চালু নেই। কোনো কথোপকথনের ইতিহাস সংরক্ষণ করা হচ্ছে না।</string>
+
+    <string name="settings_title">গোপনীয়তা ও প্রস্তুতি</string>
+    <string name="settings_subtitle">এই সংস্করণ কী পারে আর কী পারে না—স্পষ্টভাবে দেখুন।</string>
+    <string name="readiness_heading">ইঞ্জিনের অবস্থা</string>
+    <string name="status_not_integrated">যুক্ত করা হয়নি</string>
+    <string name="status_unverified">যাচাই করা হয়নি</string>
+    <string name="status_not_requested">অনুমতি চাওয়া হয়নি</string>
+    <string name="readiness_microphone_title">মাইক্রোফোনে অডিও ধারণ</string>
+    <string name="readiness_microphone_body">মাইক্রোফোনের অনুমতি ঘোষণা বা অনুরোধ করা হয়নি।</string>
+    <string name="readiness_speech_title">কোরিয়ান ও বাংলা স্পিচ শনাক্তকরণ</string>
+    <string name="readiness_speech_body">কোনো স্পিচ শনাক্তকারী যুক্ত নেই; অফলাইন শনাক্তকরণ যাচাই করা হয়নি।</string>
+    <string name="readiness_translation_title">কোরিয়ান ↔ বাংলা অনুবাদ</string>
+    <string name="readiness_translation_body">কোনো স্থানীয় অনুবাদ মডেল কনফিগার করা নেই।</string>
+    <string name="readiness_agent_title">প্রসঙ্গ বুঝে উত্তর দেওয়ার এজেন্ট</string>
+    <string name="readiness_agent_body">কোনো ভাষা মডেল চালু নেই এবং কোনো অনলাইন সেবা ব্যবহার করা হয় না।</string>
+    <string name="readiness_tts_title">কোরিয়ান কথার অডিও</string>
+    <string name="readiness_tts_body">এই সংস্করণে সিস্টেমের টেক্সট-টু-স্পিচ যুক্ত করা হয়নি।</string>
+    <string name="readiness_storage_title">কথোপকথনের তথ্য সংরক্ষণ</string>
+    <string name="readiness_storage_body">এই সংস্করণে কথার লেখা, অডিও বা সংরক্ষিত বাক্যের ইতিহাস রাখা হয় না।</string>
+    <string name="privacy_heading">এই সংস্করণে গোপনীয়তা</string>
+    <string name="privacy_body">কোনো অডিও রেকর্ড হয় না। কথোপকথনের লেখা কোনো অনলাইন সেবায় পাঠানো হয় না। টাইপ করা লেখা শুধু বর্তমান পর্দায় থাকে।</string>
+    <string name="offline_notice_title">অফলাইন সুবিধা এখনো যাচাই করা হয়নি</string>
+    <string name="offline_notice_body">ভবিষ্যতের কোনো মডেলকে অফলাইন বলা হবে কেবল নেটওয়ার্ক বন্ধ থাকা পরিষ্কার ডিভাইসে তার সম্পূর্ণ প্রক্রিয়া পরীক্ষা করার পর।</string>
+
+    <string name="status_ready">প্রস্তুত</string>
+    <string name="status_missing_model">মডেল নেই</string>
+    <string name="status_download_required">ডাউনলোড প্রয়োজন</string>
+    <string name="status_language_unavailable">ভাষা পাওয়া যায়নি</string>
+    <string name="status_error">ত্রুটি</string>
+    <string name="accessibility_app_logo">কে-ব্রিজ এআই অ্যাপের লোগো</string>
+    <string name="accessibility_information">আরও তথ্য</string>
+</resources>
