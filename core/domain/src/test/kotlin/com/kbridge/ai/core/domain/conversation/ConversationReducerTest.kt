@@ -76,10 +76,11 @@ class ConversationReducerTest {
         state = reducer.reduce(state, ConversationEvent.TranslationStarted("first"))
         state = reducer.reduce(state, ConversationEvent.TranslationCompleted("first", "প্রথম প্রশ্ন"))
         state = reducer.reduce(state, ConversationEvent.ReplyGenerationStarted("first"))
-        state = reducer.reduce(
-            state,
-            ConversationEvent.ReplySuggestionsReady("first", emptyList()),
-        )
+        state =
+            reducer.reduce(
+                state,
+                ConversationEvent.ReplySuggestionsReady("first", emptyList()),
+            )
 
         assertEquals("second", state.activeTurnId)
         assertTrue(state.queuedTurnIds.isEmpty())
@@ -107,7 +108,8 @@ class ConversationReducerTest {
 
     @Test
     fun boundedContextReturnsMostRecentNonSupersededTurns() {
-        val turns = (1..4).map { index ->
+        val turns =
+            (1..4).map { index ->
             ConversationTurn(
                 id = "turn-$index",
                 direction = TranslationDirection.KOREAN_TO_BANGLA,
@@ -181,14 +183,19 @@ class ConversationReducerTest {
         assertNotEquals(ConversationPhase.STOPPED, state.phase)
     }
 
-    private fun listeningSnapshot(): ConversationSnapshot = reducer
-        .reduce(ConversationSnapshot(), ConversationEvent.StartRequested)
-        .let { reducer.reduce(it, ConversationEvent.MicrophoneCaptureStarted) }
+    private fun listeningSnapshot(): ConversationSnapshot =
+        reducer
+            .reduce(ConversationSnapshot(), ConversationEvent.StartRequested)
+            .let { reducer.reduce(it, ConversationEvent.MicrophoneCaptureStarted) }
 
-    private fun finalEvent(id: String, text: String) = ConversationEvent.FinalTranscriptReceived(
-        transcriptId = id,
-        direction = TranslationDirection.KOREAN_TO_BANGLA,
-        text = text,
-        timestampEpochMillis = 1_000L,
-    )
+    private fun finalEvent(
+        id: String,
+        text: String,
+    ) =
+        ConversationEvent.FinalTranscriptReceived(
+            transcriptId = id,
+            direction = TranslationDirection.KOREAN_TO_BANGLA,
+            text = text,
+            timestampEpochMillis = 1_000L,
+        )
 }
