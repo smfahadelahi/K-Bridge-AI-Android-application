@@ -31,11 +31,16 @@ jobs:
       - name: Install latest stable Android SDK
         run: |
           set -euo pipefail
-          packages="$(sdkmanager --list --channel=0)"
-          platform="$(printf '%s\n' "$packages" | grep -Eo 'platforms;android-[0-9]+' | sed 's/.*android-//' | sort -nu | tail -n 1)"
-          build_tools="$(printf '%s\n' "$packages" | grep -Eo 'build-tools;[0-9]+\.[0-9]+\.[0-9]+' | sed 's/.*;//' | sort -V | tail -n 1)"
-          test -n "$platform"
-          test -n "$build_tools"
+          if packages="$(sdkmanager --list --channel=0 2>&1)"; then
+            :
+          else
+            packages="$(sdkmanager --list 2>&1)"
+          fi
+          platform="$(printf '%s\n' "$packages" | grep -Eo 'platforms;android-[0-9]+' | sed 's/.*android-//' | sort -nu | tail -n 1 || true)"
+          build_tools="$(printf '%s\n' "$packages" | grep -Eo 'build-tools;[0-9]+\.[0-9]+\.[0-9]+' | sed 's/.*;//' | sort -V | tail -n 1 || true)"
+          platform="${platform:-36}"
+          build_tools="${build_tools:-36.0.0}"
+          echo "Installing Android API $platform and Build Tools $build_tools."
           sdkmanager "platform-tools" "platforms;android-$platform" "build-tools;$build_tools"
           printf 'ANDROID_COMPILE_SDK=%s\nANDROID_TARGET_SDK=%s\n' "$platform" "$platform" >> "$GITHUB_ENV"
 
