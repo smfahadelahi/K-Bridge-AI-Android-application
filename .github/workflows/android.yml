@@ -86,13 +86,33 @@ jobs:
           path: ${{ runner.temp }}/gradle-build.log
           if-no-files-found: error
 
-      - name: Run Compose UI tests on Android 15
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: k-bridge-ai-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Check emulator host acceleration
+        run: |
+          if [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
+            echo "::notice title=Emulator host::KVM hardware acceleration is available."
+          else
+            echo "::warning title=Emulator host::KVM is unavailable; emulator boot may be very slow."
+          fi
+
+      - name: Run Compose UI tests on Android 12 (minimum API)
         id: compose_tests
         uses: reactivecircus/android-emulator-runner@v2.38.0
         with:
-          api-level: 35
+          api-level: 31
           target: google_apis
           arch: x86_64
+          cores: 4
+          ram-size: 4096M
+          heap-size: 512M
+          emulator-boot-timeout: 600
           disable-animations: true
           script: |
             set -o pipefail
@@ -104,10 +124,14 @@ jobs:
         shell: bash
         run: |
           test_log="$RUNNER_TEMP/compose-ui-test.log"
-          summary="$(grep -E -A 8 'FAILURE:|\* What went wrong:|^e: |FAILED$|failed|Failed|Tests run:|INSTRUMENTATION_STATUS|No tests found' \
-            "$test_log" | tail -n 80 || true)"
-          if [ -z "$summary" ]; then
-            summary="$(tail -n 80 "$test_log")"
+          if [ -s "$test_log" ]; then
+            summary="$(grep -E -A 8 'FAILURE:|\* What went wrong:|^e: |FAILED$|failed|Failed|Tests run:|INSTRUMENTATION_STATUS|No tests found' \
+              "$test_log" | tail -n 80 || true)"
+            if [ -z "$summary" ]; then
+              summary="$(tail -n 80 "$test_log")"
+            fi
+          else
+            summary="The emulator failed before the test script started; no Gradle test log was produced."
           fi
           tail_text="$(printf '%s' "$summary" | tr '\n' ' ' | cut -c1-7000)"
           echo "::error title=Compose UI test failure summary::$tail_text"
@@ -115,16 +139,12 @@ jobs:
             echo "### Compose UI test failure summary"
             printf '%s\n' "$summary"
             echo "### Compose UI test log tail"
-            tail -n 50 "$test_log"
+            if [ -s "$test_log" ]; then
+              tail -n 50 "$test_log"
+            else
+              echo "No Gradle test log was created because the emulator did not boot."
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload debug APK
-        uses: actions/upload-artifact@v7.0.2
-        with:
-          name: k-bridge-ai-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
-          retention-days: 14
 
       - name: Decode release keystore
         if: ${{ env.RELEASE_SIGNING_CONFIGURED == 'true' }}
