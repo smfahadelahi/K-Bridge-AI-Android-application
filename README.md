@@ -28,13 +28,15 @@ The UI currently marks unavailable features clearly. Text typed into the transla
 ./gradlew :app:lintDebug :app:assembleDebug
 ```
 
-The debug APK is written to `app/build/outputs/apk/debug/app-debug.apk`. Install on a connected Android device with:
+The debug APK is written to `app/build/outputs/apk/debug/app-debug.apk`. GitHub Actions uploads it as the `k-bridge-ai-debug-apk` artifact after a successful debug build, before optional emulator tests; download it from the run’s **Artifacts** section. It is a debug-signed installable build, not a release-signed APK. Install a locally built copy on a connected Android device with:
 
 ```bash
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
 By default, Gradle selects the highest numbered Android platform installed in `ANDROID_HOME` / `ANDROID_SDK_ROOT`, then applies that API to both `compileSdk` and `targetSdk`. CI selects the highest platform pre-installed on the pinned runner image; if a preview platform is installed locally, pin the current stable API explicitly with `-PandroidCompileSdk=<api> -PandroidTargetSdk=<api>` or `ANDROID_COMPILE_SDK` / `ANDROID_TARGET_SDK`. If no SDK platform is installed, the development fallback is API 36. `minSdk` remains API 31.
+
+CI always compiles the Compose instrumentation-test APK. It runs those tests on an emulator only when the runner exposes readable/writable `/dev/kvm`; on runners without hardware acceleration it reports a warning and skips emulator execution rather than timing out. Domain/app unit tests, lint, the debug build, and debug-APK upload still run.
 
 ## Release signing
 

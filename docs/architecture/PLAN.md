@@ -10,7 +10,7 @@
 - Bengali (`values-bn`) strings and English default strings; five reachable sections: conversation, text entry, practice roadmap, saved-phrase empty state, and readiness/privacy.
 - Pure Kotlin `:core:domain` module containing the conversation phases/events/reducer, transcript de-duplication, queued turns, bounded context, and injectable engine contracts.
 - Domain unit tests and Compose instrumentation tests for truthful unavailable states.
-- KtLint, Android lint, unit/instrumentation tests, debug APK CI artifact, and optional secret-backed release signing.
+- KtLint, Android lint, domain/app unit tests, instrumentation-test APK compilation, and a debug APK CI artifact. Connected Compose instrumentation tests run only when the runner has readable/writable `/dev/kvm`; otherwise CI warns and skips emulator execution. Optional release signing uses repository secrets.
 - No `RECORD_AUDIO` or `INTERNET` permission; no model, cloud client, audio capture, database, or fake inference implementation.
 
 The app's visible disabled states are intentional. This phase establishes an honest, buildable base; it does not satisfy the voice-workflow release criteria.

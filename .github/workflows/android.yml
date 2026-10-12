@@ -52,6 +52,7 @@ jobs:
             :app:ktlintCheck \
             :core:domain:test \
             :app:testDebugUnitTest \
+            :app:assembleDebugAndroidTest \
             :app:lintDebug \
             :app:assembleDebug 2>&1 | tee "$RUNNER_TEMP/gradle-build.log"
 
@@ -95,14 +96,18 @@ jobs:
           retention-days: 14
 
       - name: Check emulator host acceleration
+        id: emulator_host
         run: |
           if [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
             echo "::notice title=Emulator host::KVM hardware acceleration is available."
           else
-            echo "::warning title=Emulator host::KVM is unavailable; emulator boot may be very slow."
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Emulator host::KVM is unavailable; Android instrumentation tests were compiled but will not execute on this runner."
           fi
 
       - name: Run Compose UI tests on Android 12 (minimum API)
+        if: ${{ steps.emulator_host.outputs.available == 'true' }}
         id: compose_tests
         uses: reactivecircus/android-emulator-runner@v2.38.0
         with:
