@@ -20,6 +20,6 @@ Reviewed the Android manifest and application startup, Compose navigation/screen
 
 ## Verification limits
 
-- Before these audit changes, CI run [38726663405](https://github.com/smfahadelahi/K-Bridge-AI-Android-application/actions/runs/38726663405) passed Kotlin checks, unit tests, lint, instrumentation APK compilation, and debug APK assembly.
-- Post-audit CI and release results will be recorded here after the workflow completes.
-- The sandbox has no Java runtime, so Gradle cannot be run locally. The latest CI host lacked usable `/dev/kvm`; instrumentation tests were compiled but not executed. No real Android device validation has been completed for ML Kit model installation, translation output, airplane-mode behavior, Room UI flows, or accessibility.
+- Post-audit CI run [38734644468](https://github.com/smfahadelahi/K-Bridge-AI-Android-application/actions/runs/38734644468) passed Kotlin checks, the domain and new repository JVM tests, lint, instrumentation APK compilation, and debug APK assembly. The separate release job also built the APK and verified its signature and application package.
+- Published [v0.1.0-preview.34](https://github.com/smfahadelahi/K-Bridge-AI-Android-application/releases/tag/v0.1.0-preview.34), with the installable APK at [app-debug.apk](https://github.com/smfahadelahi/K-Bridge-AI-Android-application/releases/download/v0.1.0-preview.34/app-debug.apk) (125,141,164 bytes). It is debug-signed, not production-signed.
+- The CI host lacked usable `/dev/kvm`; instrumentation tests were compiled but not executed. No real Android device validation has been completed for ML Kit model installation, translation output, airplane-mode behavior, Room UI flows, or accessibility. The sandbox also has no Java runtime for local Gradle builds.

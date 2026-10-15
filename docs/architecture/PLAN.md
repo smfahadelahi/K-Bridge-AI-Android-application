@@ -14,7 +14,7 @@
 - A 27-entry Korean–Bangla starter phrase set across everyday, shopping, transport, health, workplace, and housing contexts. The phrases are not professionally certified or native-editor-reviewed; urgent or high-impact meanings need confirmation.
 - Typed Korean↔Bangla translation through Google ML Kit. The UI checks local model availability; it does not translate until the models are present. Download is explicitly confirmed by the user and requires Wi-Fi. This app's translation adapter passes text to the on-device ML Kit translator and has no translation-server or generative-AI request.
 - Saved phrases can be reviewed in randomized Korean→Bangla and Bangla→Korean self-check flashcards. Guesses and learning progress are not recorded.
-- Room and Compose instrumentation test sources plus pure domain unit tests.
+- App repository JVM tests, Room/Compose instrumentation test sources, and pure domain unit tests.
 
 ### Not implemented / not verified
 
@@ -57,7 +57,7 @@ The existing domain engine ports include `SpeechRecognitionEngine`, `Translation
 
 - Bundled phrase IDs are stable and reinserted with `INSERT IGNORE`; Room's database is private to the app.
 - Saved phrase pairs are created only when a user taps a bookmark or explicitly saves a translation. Removing a bundled phrase removes its bookmark; removing a user-created phrase deletes that row.
-- Translation history defaults off and stores only successful typed source/target text when the setting is enabled. It is capped at 100 entries. Settings offers a confirmation before deleting all translation history; that action does not erase saved phrases.
+- Translation history defaults off and stores only successful typed source/target text when the setting is enabled. It is capped at 100 entries. Settings offers a confirmation before deleting all translation history; that action does not erase saved phrases. ViewModel history writes are serialized with deletion so an in-flight translation cannot silently repopulate history after the user clears it.
 - Raw audio is not captured or persisted. Android app backup is disabled.
 - This policy should be revisited before adding speech, camera, or remote services. In particular, do not silently put transcripts into history, upload conversation context, or persist OCR images.
 
@@ -98,12 +98,12 @@ The bundled pairs are pragmatic MVP examples rather than certified translations.
 ## 4. Roadmap / acceptance gates
 
 1. **Android foundation — complete.** Compose navigation, Bengali resources, truthful unavailable states, domain contracts/reducer, tests, and CI.
-2. **Local learning + typed translation — implemented and CI build verified; device verification pending.** Run [38725969084](https://github.com/smfahadelahi/K-Bridge-AI-Android-application/actions/runs/38725969084) passed Kotlin checks, domain/app unit tests, lint, debug build, and instrumentation-test APK compilation. The runner lacked KVM, so Room/Compose instrumentation did not execute. Verify phrase storage on-device, translation both directions, and offline behavior.
+2. **Local learning + typed translation — implemented and CI build verified; device verification pending.** Run [38734644468](https://github.com/smfahadelahi/K-Bridge-AI-Android-application/actions/runs/38734644468) passed Kotlin checks, domain/app unit tests, lint, debug build, and instrumentation-test APK compilation. The runner lacked KVM, so Room/Compose instrumentation did not execute. Verify phrase storage on-device, translation both directions, and offline behavior.
 3. **Foreground speech input — not started.** Runtime permission, on-device-only capability reporting, partial/final separation, stop/cancel/lifecycle handling, language-resource errors, no background mic.
 4. **Korean camera OCR — not started.** Camera/photo contract, on-device Korean OCR, correction step, temporary-file deletion, permission and unsupported-device states.
 5. **AI reply service — not started.** Secure backend contract and deployment sample, HTTPS validation, server-side secrets, request/response validation, per-user rate limits and spending caps, explicit user consent, timeout/poor-connectivity handling, and no fake replies.
 6. **TTS and end-to-end conversation — not started.** Korean voice availability, playback, interruption, bounded context, turn queueing, correction/clarification, history policy, and complete multi-turn stop/restart behavior.
 7. **Content, privacy, and accessibility review — not started.** Native review of phrasebook, accessibility testing, permission/privacy copy review, migrations/deletion verification, and error-state tests.
-8. **Device quality and release — not started.** Install on clean Android 12+ devices, measure memory/latency, verify permission denial and poor connectivity, test offline after model download, inspect release signing, and publish a debug/release artifact only with accurate notes.
+8. **Device quality and production release — partial.** Debug-signed preview [v0.1.0-preview.34](https://github.com/smfahadelahi/K-Bridge-AI-Android-application/releases/tag/v0.1.0-preview.34) is published with explicit limitations; production release signing is not configured. Install on clean Android 12+ devices, measure memory/latency, verify permission denial and poor connectivity, test offline after model download, and configure a stable production keystore before production distribution.
 
 The final voice-first acceptance journey remains: choose a situation; speak or type; see Korean recognition where supported; receive Korean↔Bangla translation; receive exactly three useful Korean reply options with Bangla meanings only from a real configured backend; play a Korean reply; save phrases; practice saved phrases; delete local history. Critical offline claims require a network-disabled end-to-end test. The current increment meets only phrasebook, typed-translation, local-saving/history, and basic self-check portions of that journey.
