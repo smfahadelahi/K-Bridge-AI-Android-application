@@ -20,12 +20,15 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -56,6 +59,16 @@ fun KBridgeApp(viewModel: KBridgeViewModel = viewModel()) {
     val savedPhrases by viewModel.savedPhrases.collectAsStateWithLifecycle()
     val recentHistory by viewModel.recentHistory.collectAsStateWithLifecycle()
     val rememberHistory by viewModel.rememberHistory.collectAsStateWithLifecycle()
+    val phrasebookInitialization by viewModel.phrasebookInitialization.collectAsStateWithLifecycle()
+    val storageOperationError by viewModel.storageOperationError.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val storageErrorMessage =
+        when (storageOperationError) {
+            StorageOperationError.PHRASE_UPDATE -> stringResource(R.string.storage_error_phrase_update)
+            StorageOperationError.HISTORY_SAVE -> stringResource(R.string.storage_error_history_save)
+            StorageOperationError.HISTORY_DELETE -> stringResource(R.string.storage_error_history_delete)
+            null -> null
+        }
     val onDirectionChanged: (TranslationDirection) -> Unit = { updatedDirection ->
         if (updatedDirection != direction) {
             viewModel.clearTranslationResult()
@@ -69,9 +82,17 @@ fun KBridgeApp(viewModel: KBridgeViewModel = viewModel()) {
         }
     }
 
+    LaunchedEffect(storageOperationError, storageErrorMessage) {
+        if (storageOperationError != null && storageErrorMessage != null) {
+            snackbarHostState.showSnackbar(storageErrorMessage)
+            viewModel.clearStorageOperationError()
+        }
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = { AppHeader() },
         bottomBar = {
             AppNavigationBar(
@@ -117,6 +138,8 @@ fun KBridgeApp(viewModel: KBridgeViewModel = viewModel()) {
                     SavedScreen(
                         phrasebook = phrasebook,
                         savedPhrases = savedPhrases,
+                        phrasebookInitialization = phrasebookInitialization,
+                        onRetryPhrasebookInitialization = viewModel::retryPhrasebookInitialization,
                         onToggleSaved = viewModel::setPhraseSaved,
                     )
 

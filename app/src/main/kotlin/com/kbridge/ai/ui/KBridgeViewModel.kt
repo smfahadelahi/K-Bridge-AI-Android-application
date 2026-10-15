@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.kbridge.ai.KBridgeApplication
+import com.kbridge.ai.PhrasebookInitializationStatus
 import com.kbridge.ai.core.domain.conversation.TranslationDirection
 import com.kbridge.ai.core.domain.phrasebook.PhraseEntry
 import com.kbridge.ai.core.domain.phrasebook.PhraseScenario
@@ -20,17 +21,27 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.util.UUID
 
 class KBridgeViewModel(application: Application) : AndroidViewModel(application) {
-    private val repository: PhraseRepository = (application as KBridgeApplication).phraseRepository
+    private val kBridgeApplication = application as KBridgeApplication
+    private val repository: PhraseRepository = kBridgeApplication.phraseRepository
     private val translationEngine = MlKitTranslationEngine()
     private val preferences = application.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
+    private val historyMutex = Mutex()
+    private var historyGeneration = 0L
 
     private val _translationState = MutableStateFlow(TranslationUiState())
     private var translationJob: Job? = null
     private var translationRequestId = 0L
     val translationState: StateFlow<TranslationUiState> = _translationState.asStateFlow()
+    val phrasebookInitialization: StateFlow<PhrasebookInitializationStatus> =
+        kBridgeApplication.phrasebookInitialization
+
+    private val _storageOperationError = MutableStateFlow<StorageOperationError?>(null)
+    val storageOperationError: StateFlow<StorageOperationError?> = _storageOperationError.asStateFlow()
 
     val phrasebook: StateFlow<List<PhraseEntry>> =
         repository
@@ -60,6 +71,7 @@ class KBridgeViewModel(application: Application) : AndroidViewModel(application)
                 koreanResult = null,
                 banglaResult = null,
                 resultSaved = false,
+                isSavingPhrase = false,
                 isTranslating = false,
                 error = null,
             )
@@ -75,6 +87,7 @@ class KBridgeViewModel(application: Application) : AndroidViewModel(application)
                 koreanResult = null,
                 banglaResult = null,
                 resultSaved = false,
+                isSavingPhrase = false,
                 isTranslating = false,
                 error = null,
             )
@@ -83,6 +96,14 @@ class KBridgeViewModel(application: Application) : AndroidViewModel(application)
 
     fun selectPhraseScenario(scenario: PhraseScenario) {
         _translationState.update { it.copy(selectedScenario = scenario) }
+    }
+
+    fun retryPhrasebookInitialization() {
+        kBridgeApplication.initializePhrasebook()
+    }
+
+    fun clearStorageOperationError() {
+        _storageOperationError.value = null
     }
 
     fun refreshTranslationModel(direction: TranslationDirection) {
@@ -151,8 +172,11 @@ class KBridgeViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun translate(direction: TranslationDirection) {
-        val input = _translationState.value.draft.trim()
-        if (input.isBlank() || _translationState.value.isTranslating) return
+        val currentState = _translationState.value
+        val input = currentState.draft.trim()
+        if (input.isBlank() || currentState.isTranslating) return
+        val rememberHistoryForRequest = _rememberHistory.value
+        val historyGenerationForRequest = historyGeneration
         translationJob?.cancel()
         val requestId = ++translationRequestId
         _translationState.update {
@@ -162,6 +186,7 @@ class KBridgeViewModel(application: Application) : AndroidViewModel(application)
                 koreanResult = null,
                 banglaResult = null,
                 resultSaved = false,
+                isSavingPhrase = false,
                 error = null,
             )
         }
@@ -200,16 +225,30 @@ class KBridgeViewModel(application: Application) : AndroidViewModel(application)
                             error = null,
                         )
                     }
-                    if (_rememberHistory.value && requestId == translationRequestId) {
-                        repository.recordTranslation(
-                            TranslationHistoryEntry(
-                                id = UUID.randomUUID().toString(),
-                                sourceText = input,
-                                translatedText = translated,
-                                direction = direction.name,
-                                createdAtEpochMillis = System.currentTimeMillis(),
-                            ),
-                        )
+                    if (rememberHistoryForRequest && requestId == translationRequestId) {
+                        try {
+                            historyMutex.withLock {
+                                if (
+                                    historyGenerationForRequest == historyGeneration &&
+                                    _rememberHistory.value &&
+                                    requestId == translationRequestId
+                                ) {
+                                    repository.recordTranslation(
+                                        TranslationHistoryEntry(
+                                            id = UUID.randomUUID().toString(),
+                                            sourceText = input,
+                                            translatedText = translated,
+                                            direction = direction.name,
+                                            createdAtEpochMillis = System.currentTimeMillis(),
+                                        ),
+                                    )
+                                }
+                            }
+                        } catch (cancelled: CancellationException) {
+                            throw cancelled
+                        } catch (_: Exception) {
+                            _storageOperationError.value = StorageOperationError.HISTORY_SAVE
+                        }
                     }
                 } catch (cancelled: CancellationException) {
                     throw cancelled
@@ -237,13 +276,26 @@ class KBridgeViewModel(application: Application) : AndroidViewModel(application)
         val state = _translationState.value
         val korean = state.koreanResult ?: return
         val bangla = state.banglaResult ?: return
-        if (state.resultSaved) return
+        if (state.resultSaved || state.isSavingPhrase) return
+        val requestId = translationRequestId
+        val scenario = state.selectedScenario
+        _translationState.update { it.copy(isSavingPhrase = true, error = null) }
         viewModelScope.launch {
             try {
-                repository.saveUserPhrase(korean, bangla, state.selectedScenario)
-                _translationState.update { it.copy(resultSaved = true) }
+                repository.saveUserPhrase(korean, bangla, scenario)
+                updateTranslationState(requestId) { current ->
+                    if (current.koreanResult == korean && current.banglaResult == bangla) {
+                        current.copy(isSavingPhrase = false, resultSaved = true)
+                    } else {
+                        current
+                    }
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (_: Exception) {
-                _translationState.update { it.copy(error = TranslationError.SAVE_PHRASE) }
+                updateTranslationState(requestId) {
+                    it.copy(isSavingPhrase = false, error = TranslationError.SAVE_PHRASE)
+                }
             }
         }
     }
@@ -253,7 +305,13 @@ class KBridgeViewModel(application: Application) : AndroidViewModel(application)
         saved: Boolean,
     ) {
         viewModelScope.launch {
-            repository.setPhraseSaved(phrase, saved)
+            try {
+                repository.setPhraseSaved(phrase, saved)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                _storageOperationError.value = StorageOperationError.PHRASE_UPDATE
+            }
         }
     }
 
@@ -263,7 +321,16 @@ class KBridgeViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun clearHistory() {
-        viewModelScope.launch { repository.clearHistory() }
+        historyGeneration += 1
+        viewModelScope.launch {
+            try {
+                historyMutex.withLock { repository.clearHistory() }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                _storageOperationError.value = StorageOperationError.HISTORY_DELETE
+            }
+        }
     }
 
     companion object {
@@ -282,6 +349,7 @@ data class TranslationUiState(
     val modelStatus: TranslationModelStatus = TranslationModelStatus.CHECKING,
     val isTranslating: Boolean = false,
     val resultSaved: Boolean = false,
+    val isSavingPhrase: Boolean = false,
     val error: TranslationError? = null,
 )
 
@@ -298,4 +366,10 @@ enum class TranslationError {
     DOWNLOAD,
     TRANSLATION,
     SAVE_PHRASE,
+}
+
+enum class StorageOperationError {
+    PHRASE_UPDATE,
+    HISTORY_SAVE,
+    HISTORY_DELETE,
 }

@@ -55,6 +55,7 @@
     <string name="translation_quality_notice">Machine translation can miss context, tone, or nuance. Confirm important medical, legal, financial, or safety information with a qualified person.</string>
     <string name="translation_saved">Saved to your phrasebook</string>
     <string name="save_translation_phrase">Save phrase pair</string>
+    <string name="saving_phrase">Saving…</string>
     <string name="save_phrase_failed">Could not save this phrase to local storage. Please try again.</string>
     <string name="model_download_consent_title">Download offline translation models?</string>
     <string name="model_download_consent_body">Korean and Bengali model files will be downloaded over Wi-Fi using Google ML Kit / Google Play services and stored on this device. File size and storage use can vary. No typed phrase or audio is sent for translation. Continue only if you agree to the model download.</string>
@@ -94,6 +95,9 @@
     <string name="phrasebook_filter_saved">Saved</string>
     <string name="phrasebook_loading_title">Loading local phrasebook</string>
     <string name="phrasebook_loading_body">The bundled starter phrases are being added to the local database.</string>
+    <string name="phrasebook_initialization_error_title">Could not initialize the offline phrasebook</string>
+    <string name="phrasebook_initialization_error_body">The app could not add its bundled starter phrases to local storage. Nothing was sent anywhere. Please retry.</string>
+    <string name="retry_phrasebook_initialization">Retry setup</string>
     <string name="phrasebook_no_matches_title">No phrases in this category</string>
     <string name="phrasebook_no_matches_body">Choose another situation or view all phrases.</string>
     <string name="save_phrase">Save phrase</string>
@@ -127,7 +131,10 @@
     <string name="history_privacy_body">History is off by default. When enabled, source and translated text are stored locally in Room, never uploaded by this feature. Existing entries stay until you clear them.</string>
     <string name="history_opt_in_label">Save future translations</string>
     <string name="history_empty">No translation history is stored.</string>
-    <string name="history_recent_limit">The local database keeps up to %1$d recent entries; only the five above are previewed here.</string>
+    <string name="history_recent_limit">Showing five of the %1$d most recent history items loaded here.</string>
+    <string name="storage_error_phrase_update">Could not update that saved phrase. Please try again.</string>
+    <string name="storage_error_history_save">The translation succeeded, but its history entry could not be saved.</string>
+    <string name="storage_error_history_delete">Could not delete translation history. Please try again.</string>
     <string name="clear_history_button">Delete all translation history</string>
     <string name="clear_history_confirmation_title">Delete translation history?</string>
     <string name="clear_history_confirmation_body">This permanently deletes locally stored translation history. Saved phrases are not affected.</string>

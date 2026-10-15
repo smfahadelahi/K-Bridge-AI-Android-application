@@ -38,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.kbridge.ai.PhrasebookInitializationStatus
 import com.kbridge.ai.R
 import com.kbridge.ai.core.domain.phrasebook.PhraseEntry
 import com.kbridge.ai.core.domain.phrasebook.PhraseScenario
@@ -199,6 +200,8 @@ private fun PracticeCard(
 fun SavedScreen(
     phrasebook: List<PhraseEntry>,
     savedPhrases: List<PhraseEntry>,
+    phrasebookInitialization: PhrasebookInitializationStatus,
+    onRetryPhrasebookInitialization: () -> Unit,
     onToggleSaved: (PhraseEntry, Boolean) -> Unit,
 ) {
     var showSavedOnly by rememberSaveable { mutableStateOf(false) }
@@ -257,11 +260,25 @@ fun SavedScreen(
             }
         } else if (!showSavedOnly && phrasebook.isEmpty()) {
             item {
-                InfoPanel(
-                    title = stringResource(R.string.phrasebook_loading_title),
-                    body = stringResource(R.string.phrasebook_loading_body),
-                    leading = { Icon(imageVector = Icons.Filled.AutoStories, contentDescription = null) },
-                )
+                if (phrasebookInitialization == PhrasebookInitializationStatus.ERROR) {
+                    InfoPanel(
+                        title = stringResource(R.string.phrasebook_initialization_error_title),
+                        body = stringResource(R.string.phrasebook_initialization_error_body),
+                        leading = { Icon(imageVector = Icons.Filled.AutoStories, contentDescription = null) },
+                    )
+                    Button(
+                        onClick = onRetryPhrasebookInitialization,
+                        shape = RoundedCornerShape(16.dp),
+                    ) {
+                        Text(stringResource(R.string.retry_phrasebook_initialization))
+                    }
+                } else {
+                    InfoPanel(
+                        title = stringResource(R.string.phrasebook_loading_title),
+                        body = stringResource(R.string.phrasebook_loading_body),
+                        leading = { Icon(imageVector = Icons.Filled.AutoStories, contentDescription = null) },
+                    )
+                }
             }
         } else if (visiblePhrases.isEmpty()) {
             item {

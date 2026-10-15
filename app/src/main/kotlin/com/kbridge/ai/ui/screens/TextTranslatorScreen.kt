@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -215,10 +216,27 @@ fun TextTranslatorScreen(
                                 style = MaterialTheme.typography.labelLarge,
                             )
                         } else {
-                            TextButton(onClick = onSavePhrase) {
-                                Icon(imageVector = Icons.Filled.BookmarkAdd, contentDescription = null)
+                            TextButton(
+                                onClick = onSavePhrase,
+                                enabled = !state.isSavingPhrase,
+                            ) {
+                                if (state.isSavingPhrase) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(18.dp),
+                                        strokeWidth = 2.dp,
+                                    )
+                                } else {
+                                    Icon(imageVector = Icons.Filled.BookmarkAdd, contentDescription = null)
+                                }
                                 Text(
-                                    text = stringResource(R.string.save_translation_phrase),
+                                    text =
+                                        stringResource(
+                                            if (state.isSavingPhrase) {
+                                                R.string.saving_phrase
+                                            } else {
+                                                R.string.save_translation_phrase
+                                            },
+                                        ),
                                     modifier = Modifier.padding(start = 6.dp),
                                 )
                             }

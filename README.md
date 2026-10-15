@@ -24,10 +24,11 @@ The conversation screen labels these capabilities unavailable instead of display
 
 ## Project structure
 
-- `app/` — Android application, Compose UI, ML Kit translation adapter, Room database/repository, and instrumentation tests.
+- `app/` — Android application, Compose UI, ML Kit translation adapter, Room database/repository, JVM repository tests, and instrumentation tests.
 - `core/domain/` — Android-independent conversation models/reducer, engine contracts, phrasebook content, quiz selection, and unit tests.
 - `docs/architecture/PLAN.md` — current implementation status, architecture, privacy boundaries, validation gates, and remaining roadmap.
-- `.github/workflows/android.yml` — Kotlin checks, unit tests, lint, debug APK, instrumentation APK compilation, optional emulator tests, and signed-release artifacts when secrets are configured.
+- `docs/quality/APP_AUDIT.md` — latest app audit findings and verified limitations.
+- `.github/workflows/android.yml` — Kotlin checks, unit tests, lint, debug APK, instrumentation APK compilation, optional emulator tests, signed-release artifacts when secrets are configured, and an opt-in debug APK prerelease.
 
 ## Requirements
 
@@ -50,9 +51,9 @@ The debug APK is written to `app/build/outputs/apk/debug/app-debug.apk`. Install
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-GitHub Actions uploads a debug APK named `k-bridge-ai-debug-apk` after the Gradle checks/build. Download it from the successful run’s **Artifacts** section. It is debug-signed, not a release-signed APK. The successful build for this increment is [run 38725969084](https://github.com/smfahadelahi/K-Bridge-AI-Android-application/actions/runs/38725969084); its APK artifact is available from that page.
+GitHub Actions uploads a debug APK named `k-bridge-ai-debug-apk` after the Gradle checks/build. Download it from the successful run’s **Artifacts** section. It is debug-signed, not a release-signed APK. The previous baseline build is [run 38726663405](https://github.com/smfahadelahi/K-Bridge-AI-Android-application/actions/runs/38726663405); its APK artifact is available from that page.
 
-CI always compiles the instrumentation-test APK. It runs Android UI/storage instrumentation tests only when the runner exposes readable/writable `/dev/kvm`; without KVM it warns and skips emulator execution. Run 38725969084 passed Kotlin checks, unit tests, lint, debug build, and instrumentation-test APK compilation, but the Android UI/Room instrumentation tests were skipped because KVM was unavailable. A successful workflow on a host without KVM is not evidence that instrumentation tests ran.
+CI always compiles the instrumentation-test APK. It runs Android UI/storage instrumentation tests only when the runner exposes readable/writable `/dev/kvm`; without KVM it warns and skips emulator execution. Run 38726663405 passed Kotlin checks, unit tests, lint, debug build, and instrumentation-test APK compilation, but the Android UI/Room instrumentation tests were skipped because KVM was unavailable. A successful workflow on a host without KVM is not evidence that instrumentation tests ran.
 
 By default, Gradle selects the highest numbered Android platform installed in `ANDROID_HOME` / `ANDROID_SDK_ROOT`, then uses that API for `compileSdk` and `targetSdk`. Pin the stable API explicitly with `-PandroidCompileSdk=<api> -PandroidTargetSdk=<api>` or `ANDROID_COMPILE_SDK` / `ANDROID_TARGET_SDK` if needed. `minSdk` remains API 31.
 
@@ -82,6 +83,10 @@ Keep the keystore outside the repository. Then run:
 ```
 
 GitHub Actions uses repository secrets `ANDROID_RELEASE_KEYSTORE_BASE64`, `ANDROID_RELEASE_STORE_PASSWORD`, `ANDROID_RELEASE_KEY_ALIAS`, and `ANDROID_RELEASE_KEY_PASSWORD`. Secrets are not written to the checkout. Debug builds and test/lint checks do not require signing secrets.
+
+### Publishing an installable preview
+
+From **Actions → Android CI → Run workflow**, select the branch to publish and set `publish_debug_preview` to `true`; an optional `release_tag` can be provided. The workflow publishes the verified debug APK as a GitHub prerelease and checks its APK signature/package before upload. This artifact uses the Android debug key, is not production-signed, and cannot be upgraded in place to an APK signed with a future production key. Configure the release-signing secrets above for a production-signed release build.
 
 ## Current validation limits
 

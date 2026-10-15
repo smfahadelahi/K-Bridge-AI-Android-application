@@ -5,6 +5,17 @@ on:
     branches: [main, "arena/**"]
   pull_request:
   workflow_dispatch:
+    inputs:
+      publish_debug_preview:
+        description: Publish an installable, debug-signed APK prerelease after verification
+        required: true
+        type: boolean
+        default: false
+      release_tag:
+        description: Optional GitHub Release tag (for example v0.1.0-preview.1)
+        required: false
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -180,3 +191,95 @@ jobs:
             app/build/outputs/bundle/release/*.aab
           if-no-files-found: error
           retention-days: 30
+
+  publish_preview:
+    name: Publish debug-signed APK prerelease
+    needs: verify
+    if: >-
+      ${{
+        needs.verify.result == 'success' &&
+        (
+          (github.event_name == 'workflow_dispatch' && inputs.publish_debug_preview == true) ||
+          (github.event_name == 'push' &&
+            github.ref == 'refs/heads/arena/f79c0bd4-k-bridge-ai-android-applicatio' &&
+            contains(github.event.head_commit.message, '[publish-preview]'))
+        )
+      }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ inputs.release_tag }}
+    steps:
+      - name: Check out verified source
+        uses: actions/checkout@v7.0.1
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v6.0.1
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4.0.4
+
+      - name: Select latest stable Android SDK on the runner
+        run: |
+          set -euo pipefail
+          sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          test -n "$sdk_root"
+          platform="$(find "$sdk_root/platforms" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' \
+            | sed -nE 's/^android-([0-9]+)$/\1/p' | sort -nu | tail -n 1)"
+          if [ -z "$platform" ]; then
+            echo "::error::No stable Android SDK platform is installed on the runner."
+            exit 1
+          fi
+          printf 'ANDROID_COMPILE_SDK=%s\nANDROID_TARGET_SDK=%s\n' "$platform" "$platform" >> "$GITHUB_ENV"
+
+      - name: Build installable debug APK
+        run: ./gradlew --no-daemon --stacktrace --console=plain :app:assembleDebug
+
+      - name: Verify APK signature and package
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk="app/build/outputs/apk/debug/app-debug.apk"
+          build_tools="$(find "${ANDROID_HOME:-${ANDROID_SDK_ROOT}}/build-tools" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort -V | tail -n 1)"
+          test -n "$build_tools"
+          "${ANDROID_HOME:-${ANDROID_SDK_ROOT}}/build-tools/$build_tools/apksigner" verify --verbose "$apk"
+          "${ANDROID_HOME:-${ANDROID_SDK_ROOT}}/build-tools/$build_tools/aapt" dump badging "$apk" \
+            | grep -F "package: name='com.kbridge.ai'"
+
+      - name: Publish APK as a prerelease asset
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${RELEASE_TAG:-v0.1.0-preview.${GITHUB_RUN_NUMBER}}"
+          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[[:alnum:].-]+)?$ ]]; then
+            echo "::error::Release tag must follow vMAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH-prerelease."
+            exit 1
+          fi
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::Release $tag already exists; choose a new tag."
+            exit 1
+          fi
+          cat > "$RUNNER_TEMP/release-notes.md" <<'NOTES'
+          Installable debug-signed preview APK for K-Bridge AI.
+
+          **Signing:** this APK uses the Android debug key; it is not production-signed and cannot receive updates signed with a future production key.
+
+          **Available:** offline starter phrasebook, locally saved phrases and quizzes, and typed Korean↔Bangla translation after the user approves downloading ML Kit models over Wi-Fi.
+
+          **Not yet implemented:** speech recognition, camera OCR, generated AI replies, and text-to-speech. ML Kit model download requires Google Play services and an Internet connection. Translation quality is not guaranteed.
+          NOTES
+          apk="app/build/outputs/apk/debug/app-debug.apk"
+          asset_name="K-Bridge-AI-${tag}-debug.apk"
+          gh release create "$tag" "$apk#$asset_name" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "K-Bridge AI ${tag#v} (debug preview)" \
+            --prerelease \
+            --notes-file "$RUNNER_TEMP/release-notes.md"
+          gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json url,assets --jq '{url, assets: [.assets[].name]}'
