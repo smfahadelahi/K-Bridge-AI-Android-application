@@ -17,12 +17,20 @@ import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -31,11 +39,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kbridge.ai.R
+import com.kbridge.ai.core.domain.phrasebook.TranslationHistoryEntry
+import com.kbridge.ai.ui.TranslationModelStatus
 import com.kbridge.ai.ui.components.InfoPanel
 import com.kbridge.ai.ui.components.ScreenHeading
 
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(
+    translationModelStatus: TranslationModelStatus,
+    history: List<TranslationHistoryEntry>,
+    rememberHistory: Boolean,
+    onRememberHistoryChanged: (Boolean) -> Unit,
+    onClearHistory: () -> Unit,
+) {
+    var showClearHistoryConfirmation by rememberSaveable { mutableStateOf(false) }
+
     Column(
         modifier =
             Modifier
@@ -80,7 +98,7 @@ fun SettingsScreen() {
                     icon = Icons.Filled.Language,
                     title = R.string.readiness_translation_title,
                     body = R.string.readiness_translation_body,
-                    status = R.string.status_not_integrated,
+                    status = translationStatusResource(translationModelStatus),
                 )
                 ReadinessDivider()
                 ReadinessRow(
@@ -101,10 +119,18 @@ fun SettingsScreen() {
                     icon = Icons.Filled.Storage,
                     title = R.string.readiness_storage_title,
                     body = R.string.readiness_storage_body,
-                    status = R.string.status_not_integrated,
+                    status = R.string.status_local_storage,
                 )
             }
         }
+
+        TranslationHistoryPanel(
+            history = history,
+            rememberHistory = rememberHistory,
+            onRememberHistoryChanged = onRememberHistoryChanged,
+            onClearHistory = { showClearHistoryConfirmation = true },
+        )
+
         InfoPanel(
             title = stringResource(R.string.offline_notice_title),
             body = stringResource(R.string.offline_notice_body),
@@ -125,6 +151,115 @@ fun SettingsScreen() {
                 )
             },
         )
+    }
+
+    if (showClearHistoryConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showClearHistoryConfirmation = false },
+            title = { Text(stringResource(R.string.clear_history_confirmation_title)) },
+            text = { Text(stringResource(R.string.clear_history_confirmation_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showClearHistoryConfirmation = false
+                        onClearHistory()
+                    },
+                ) {
+                    Text(stringResource(R.string.clear_history_button))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearHistoryConfirmation = false }) {
+                    Text(stringResource(R.string.cancel_button))
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun TranslationHistoryPanel(
+    history: List<TranslationHistoryEntry>,
+    rememberHistory: Boolean,
+    onRememberHistoryChanged: (Boolean) -> Unit,
+    onClearHistory: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.history_heading),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = stringResource(R.string.history_privacy_body),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = stringResource(R.string.history_opt_in_label),
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Switch(
+                    checked = rememberHistory,
+                    onCheckedChange = onRememberHistoryChanged,
+                )
+            }
+            if (history.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.history_empty),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                history.take(5).forEach { entry ->
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = entry.sourceText,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            text = entry.translatedText,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                }
+                if (history.size > 5) {
+                    Text(
+                        text = stringResource(R.string.history_recent_limit, history.size),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                OutlinedButton(
+                    onClick = onClearHistory,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                ) {
+                    Text(stringResource(R.string.clear_history_button))
+                }
+            }
+        }
     }
 }
 
@@ -180,3 +315,12 @@ private fun ReadinessDivider() {
         thickness = 1.dp,
     )
 }
+
+private fun translationStatusResource(status: TranslationModelStatus): Int =
+    when (status) {
+        TranslationModelStatus.CHECKING -> R.string.status_checking
+        TranslationModelStatus.NEEDS_DOWNLOAD -> R.string.status_download_required
+        TranslationModelStatus.DOWNLOADING -> R.string.status_downloading
+        TranslationModelStatus.READY -> R.string.status_on_device_ready
+        TranslationModelStatus.ERROR -> R.string.status_error
+    }

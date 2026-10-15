@@ -1,88 +1,109 @@
 # Architecture and implementation plan
 
-**Plan date:** 2026-10-11
+**Updated:** 2026-10-15
+**Repository baseline:** Kotlin/Compose foundation with a pure Kotlin conversation reducer, UI shell, and Android CI. This plan tracks the working MVP increment; it is not a claim that the full voice-and-AI product is complete.
 
-**Repository baseline:** initial commit contained only `README.md`; no Android project, model assets, tests, or CI were present.
+## 1. Current increment
 
-## 1. First increment delivered
+### Implemented in source
 
-- Kotlin Android app with Jetpack Compose and Material 3, `minSdk = 31`; Gradle selects the highest numbered installed platform, with API 36 as a fallback. CI selects the highest platform pre-installed on its pinned runner image.
-- Bengali (`values-bn`) strings and English default strings; five reachable sections: conversation, text entry, practice roadmap, saved-phrase empty state, and readiness/privacy.
-- Pure Kotlin `:core:domain` module containing the conversation phases/events/reducer, transcript de-duplication, queued turns, bounded context, and injectable engine contracts.
-- Domain unit tests and Compose instrumentation tests for truthful unavailable states.
-- KtLint, Android lint, domain/app unit tests, instrumentation-test APK compilation, and a debug APK CI artifact. Connected Compose instrumentation tests run only when the runner has readable/writable `/dev/kvm`; otherwise CI warns and skips emulator execution. Optional release signing uses repository secrets.
-- No `RECORD_AUDIO` or `INTERNET` permission; no model, cloud client, audio capture, database, or fake inference implementation.
+- Android application using Kotlin, Jetpack Compose, Material 3, `minSdk = 31`; Gradle selects the highest stable installed SDK at build time.
+- English and Bengali (`values-bn`) UI strings; conversation, translation, practice, phrasebook, and settings destinations.
+- `:core:domain` conversation phases/events/reducer, transcript de-duplication, queue/context contracts, typed engine ports, bilingual phrase models, offline starter data, and quiz-question selection.
+- Room database and repository for the bundled phrasebook, user-saved phrase pairs, and translation history. History is opt-in (off by default), bounded to the latest 100 database entries, and can be deleted independently from saved phrases.
+- A 27-entry Korean–Bangla starter phrase set across everyday, shopping, transport, health, workplace, and housing contexts. The phrases are not professionally certified or native-editor-reviewed; urgent or high-impact meanings need confirmation.
+- Typed Korean↔Bangla translation through Google ML Kit. The UI checks local model availability; it does not translate until the models are present. Download is explicitly confirmed by the user and requires Wi-Fi. This app's translation adapter passes text to the on-device ML Kit translator and has no translation-server or generative-AI request.
+- Saved phrases can be reviewed in randomized Korean→Bangla and Bangla→Korean self-check flashcards. Guesses and learning progress are not recorded.
+- Room and Compose instrumentation test sources plus pure domain unit tests.
 
-The app's visible disabled states are intentional. This phase establishes an honest, buildable base; it does not satisfy the voice-workflow release criteria.
+### Not implemented / not verified
 
-## 2. Target architecture
+- Foreground speech recognition and microphone permission flow.
+- Korean camera OCR and temporary-image lifecycle.
+- AI reply generation, the secure remote-backend implementation, endpoint configuration, and explicit per-session consent for sending conversation text.
+- Korean TTS playback.
+- Full multi-turn conversation orchestration that links speech, translation, replies, and playback.
+- Native-language review of phrasebook content, accessibility audits with assistive technology, and device performance testing.
+- End-to-end airplane-mode translation testing on supported Android 12+ devices. The local inference path is implemented, but offline behavior must not be represented as device-verified until tested.
 
-Keep UI, policy, and platform/model integrations separated. The current app and domain modules are the first slice; later integrations should be isolated as Gradle modules rather than added to Compose screens.
+## 2. Current architecture and boundaries
 
 ```text
-:app                         Compose screens, navigation, lifecycle wiring
-:feature:conversation        session orchestration and presentation state
-:core:domain                 conversation models, reducer, engine ports (present)
-:core:speech                 AudioRecord/VAD, recognizer adapters, TTS adapter
-:core:translation            Korean ↔ Bangla translation implementations
-:core:ai                     bounded-context local reply agent and model runtime
-:core:storage                local history, saved phrases, deletion, migrations
-:core:modelmanager           versioned model manifests, downloads, checksums, licenses
+:app
+  ui/                  Compose screens, lifecycle state, KBridgeViewModel
+  data/local/          Room database, entities, DAOs
+  data/repository/     Room-backed PhraseRepository
+  platform/translation ML Kit adapter; model downloads require explicit UI consent
+
+:core:domain
+  conversation/        state, events, reducer, engine contracts
+  phrasebook/          stable scenario/model IDs, starter phrases, quiz selection
 ```
 
-The domain ports currently include `SpeechRecognitionEngine`, `TranslationEngine`, `ConversationAgent`, and `SpeechSynthesisEngine`. Platform implementations should report typed availability (not configured, model missing, download needed, unsupported language, error, ready) and may report `offlineVerified = true` only after an end-to-end airplane-mode test.
+The Room adapter is currently in `:app` to keep the first persistence increment small. Before feature growth, separate Android persistence and platform engines into focused modules while preserving the Android-independent domain. Keep Android/ML Kit/Room imports out of `:core:domain`.
+
+The existing domain engine ports include `SpeechRecognitionEngine`, `TranslationEngine`, `ConversationAgent`, and `SpeechSynthesisEngine`. The current translation implementation is app/platform-specific; the other ports do not imply a working speech, AI, or TTS feature.
+
+### Translation model lifecycle
+
+- `INTERNET` is declared because ML Kit model files must be downloaded; Android does not show a runtime dialog for that permission.
+- The app does not initiate a download at startup. Model availability is queried locally when the translation screen opens.
+- If models are missing, the user sees what is downloaded, that Wi-Fi is required, and that typed content is not sent. Only a separate confirmation button starts ML Kit's `downloadModelIfNeeded`.
+- After download, input and translation use the on-device ML Kit translator. Network loss, missing Google Play services, or model failure must produce an error, not fabricated output.
+- Model download is not the same as offline verification. Test a clean install, download, disabled network, both directions, and real Korean/Bengali text on physical Android 12+ devices.
+- ML Kit's supported-language reference lists Korean and Bengali. The exact runtime model availability and translation quality still need device testing: [ML Kit translation language support](https://developers.google.com/ml-kit/language/translation/translation-language-support), [Android guide](https://developers.google.com/ml-kit/language/translation/android).
+
+### Room storage policy
+
+- Bundled phrase IDs are stable and reinserted with `INSERT IGNORE`; Room's database is private to the app.
+- Saved phrase pairs are created only when a user taps a bookmark or explicitly saves a translation. Removing a bundled phrase removes its bookmark; removing a user-created phrase deletes that row.
+- Translation history defaults off and stores only successful typed source/target text when the setting is enabled. It is capped at 100 entries. Settings offers a confirmation before deleting all translation history; that action does not erase saved phrases.
+- Raw audio is not captured or persisted. Android app backup is disabled.
+- This policy should be revisited before adding speech, camera, or remote services. In particular, do not silently put transcripts into history, upload conversation context, or persist OCR images.
 
 ### Conversation lifecycle contract
 
-The reducer models idle, permission request, listening, partial processing, finalization, translation, reply generation, speech playback, waiting, pause, stop, and recoverable error. Partial transcripts remain separate from committed turns. Final transcript IDs are de-duplicated; rapid turns queue; results for a superseded/stopped turn are ignored; stop closes the capture state and cancels pending work at the orchestration layer. The reducer has no Android/audio dependencies and is testable with deterministic events.
+The reducer models idle, permission request, listening, partial processing, finalization, translation, reply generation, speech playback, waiting, pause, stop, and recoverable error. Partial transcripts remain separate from committed turns. Final transcript IDs are de-duplicated; rapid turns queue; results for a superseded/stopped turn are ignored. The reducer has no Android/audio dependencies and can be tested with deterministic events.
 
-Effects must remain cancellable and owned by a foreground session. Request microphone permission only when the user starts. The UI may say “listening” only after the audio engine confirms capture has opened. Stop/pause/interruption must stop the actual audio/TTS engine, not merely update a screen flag.
+When speech is added, effects must be cancellable and owned by a foreground session. Request microphone permission only after the user starts. The UI may say “listening” only after an engine confirms capture has opened. Stop, pause, lifecycle interruption, and denial must stop actual capture—not merely update a screen flag. There must be no permanent background microphone service for ordinary use.
 
-## 3. Speech and local-model feasibility
+## 3. Integration choices and constraints
 
-No default model is selected or shipped in this increment. There are no model files in the checkout, and this environment has no Android SDK/device on which to verify quality, memory, or offline behavior. Selecting model weights before that validation would be an unsupported product claim.
+### Korean and Bengali speech recognition — not started
 
-### Korean and Bengali speech recognition
+- Android `SpeechRecognizer` can be capability-checked; an on-device recognizer is available only where the OS/service provides it. Locale support, partial results, offline operation, and audio routing vary by device. `EXTRA_PREFER_OFFLINE` is not proof of local-only inference. Never silently fall back to a network recognizer.
+- A multilingual `whisper.cpp` checkpoint is another evaluation candidate, not a selected or bundled runtime. Measure Korean/Bengali accuracy, latency, battery/thermal impact, memory, model size, streaming behavior, and exact checkpoint/data licenses.
+- Gate: manually reviewed Korean/Bangla samples covering accents, noise, pauses, negation, dates, amounts, and workplace directions; report measured WER/CER and latency only.
 
-- **Platform option:** Android `SpeechRecognizer` can be capability-checked and an on-device service can be used when the OS/service provides one. Locale support, incremental results, offline operation, and whether audio leaves the device vary by installed service. A preference for offline processing is not proof of offline operation. Do not silently route to a network recognizer.
-- **Local candidate:** `whisper.cpp` with a multilingual Whisper checkpoint is a practical candidate for Korean and Bengali on-device evaluation. It is not assumed to be low-latency streaming; chunking/VAD, partial-result policy, battery/thermal behavior, model size, exact checkpoint license, and Bengali/Korean accuracy must be measured. The runtime license does not by itself establish permission to redistribute every checkpoint or dataset.
-- **Decision gate:** compare local recognition with available Android on-device services on manually reviewed Korean/Bengali conversational audio, including accents, noise, pauses, amounts, dates, workplace directions, and negation. Record WER/CER and completion-to-final-text latency; do not publish fabricated scores.
+### Korean OCR — not started
 
-### Translation
+- Candidate: ML Kit Text Recognition v2 Korean recognizer, processing a user-selected/captured image on-device. Confirm bundled vs dynamically delivered model behavior and license/dependency size before integration.
+- Request camera access only when needed (or use a system camera/photo picker contract that does not require the app to hold a permanent camera session). Delete temporary images after OCR unless the user explicitly saves them. An OCR transcript is untrusted input; show it for correction before translating.
 
-- Use a dedicated local translation model (not a static phrase table and not a chat prompt masquerading as translation). Evaluate bidirectional Korean↔Bengali, especially negation, numbers, honorifics, dates, amounts, and ambiguity.
-- Multilingual encoder-decoder checkpoints (for example NLLB/M2M-family candidates) are evaluation candidates, not a distribution decision. Audit the exact model, tokenizer, training-data terms, and quantized artifact licenses. Some research checkpoints have non-commercial restrictions; do not bundle or redistribute until an exact-license review is complete.
-- No translation implementation currently returns canned output. Missing model must be a blocking, explicit result rather than a pass-through or invented translation.
+### AI replies and secure backend — not started
 
-### Context-aware reply agent
+- The domain `ConversationAgent` is only an interface. No provider, endpoint, or credential is configured in this APK.
+- Before remote replies: deploy a trusted HTTPS backend that keeps provider credentials server-side, validates request/response size and schema, rate-limits per account/device, sets usage/spending caps, and logs no raw conversation content by default.
+- On Android, remote generation must be off by default, disclose exactly which current text and bounded context will be sent, and require explicit consent before each remote send (or an equally clear user-controlled session grant). Do not send raw audio. Provide an honest “backend unavailable / not configured” state and never substitute a fake result.
+- The first implementation can offer explicit curated phrasebook responses while the backend is unavailable, but it must label these as phrasebook suggestions, not generated AI.
 
-- A small quantized multilingual local LLM (roughly 1–3B parameter evaluation range) can be tested for Korean generation and Bengali explanation on 8 GB Android devices using an Android-compatible runtime such as `llama.cpp`/GGUF. This is a candidate shape, not a selected model.
-- Measure end-to-end peak memory with speech/translation resources included, first-token latency, tokens/second, thermal throttling, and response quality. Test grounding, bounded context, correction, incomplete utterances, polite/simple variants, and a “clarify rather than guess” policy.
-- The agent must receive only a bounded recent context window, and users need a clear-session action. No third-party API or remote inference fallback is part of the core architecture.
+### Korean text-to-speech — not started
 
-### Korean speech output
+Android `TextToSpeech` is a candidate adapter. Check the installed Korean voice and language/network requirements at runtime. Offer installation guidance if unavailable; do not claim a local voice or offline speech unless verified. Playback controls and interruption belong to the speech adapter.
 
-Android `TextToSpeech` is the smallest initial adapter. Check the installed Korean voice/language and voice network requirement at runtime. Offer installation guidance when absent; do not claim a local voice is present or offline until verified. Playback controls belong to the speech adapter; interruption stops queued speech immediately.
+### Starter content and translation accuracy
 
-### Model distribution and license policy
+The bundled pairs are pragmatic MVP examples rather than certified translations. Have Korean and Bangla native-language reviewers edit the exact wording, honorific level, scenario appropriateness, and sensitive health/workplace terms before production use. The on-device translation model can also miss context, tone, negation, or named entities; expose that limitation and do not show a confidence percentage unless the underlying engine supplies a calibrated score.
 
-No runtime model hosting location is configured. A later controlled model catalog must pin model revisions and cryptographic hashes, show download size/storage needs, verify the complete artifact before loading, support cancellation/removal, and retain model/license notices. GitHub Actions is build/test automation only, never a model inference service. No API key is stored in source, resources, or the APK.
+## 4. Roadmap / acceptance gates
 
-## 4. Privacy and data flow today
+1. **Android foundation — complete.** Compose navigation, Bengali resources, truthful unavailable states, domain contracts/reducer, tests, and CI.
+2. **Local learning + typed translation — implemented in source; CI/device verification pending.** Room, offline phrasebook, save/delete, self-check quizzes, opt-in history/deletion, and consent-gated ML Kit model download/translation. Verify build, unit tests, Room instrumentation, translation both directions, and offline behavior.
+3. **Foreground speech input — not started.** Runtime permission, on-device-only capability reporting, partial/final separation, stop/cancel/lifecycle handling, language-resource errors, no background mic.
+4. **Korean camera OCR — not started.** Camera/photo contract, on-device Korean OCR, correction step, temporary-file deletion, permission and unsupported-device states.
+5. **AI reply service — not started.** Secure backend contract and deployment sample, HTTPS validation, server-side secrets, request/response validation, per-user rate limits and spending caps, explicit user consent, timeout/poor-connectivity handling, and no fake replies.
+6. **TTS and end-to-end conversation — not started.** Korean voice availability, playback, interruption, bounded context, turn queueing, correction/clarification, history policy, and complete multi-turn stop/restart behavior.
+7. **Content, privacy, and accessibility review — not started.** Native review of phrasebook, accessibility testing, permission/privacy copy review, migrations/deletion verification, and error-state tests.
+8. **Device quality and release — not started.** Install on clean Android 12+ devices, measure memory/latency, verify permission denial and poor connectivity, test offline after model download, inspect release signing, and publish a debug/release artifact only with accurate notes.
 
-This build has no `RECORD_AUDIO` or `INTERNET` permission, no audio capture, no network client, and no database. Manual translator text is held in the current UI state and produces no output. No conversation is saved. These statements describe the current code only; future storage/download features require a fresh data-flow and deletion review.
-
-## 5. Roadmap and completion gates
-
-1. **Inspect and plan — complete.** Confirm the empty baseline and document architecture/stack gates.
-2. **Android foundation and UI — first increment complete.** Compose navigation, Bengali resources, truthful engine readiness states, domain seams, and tests. Voice/model workflows remain unimplemented.
-3. **Foreground audio capture — not started.** Runtime permission, lifecycle-safe `AudioRecord`, VAD/endpoint controls, start/stop/pause/interruption tests; no persistent background microphone.
-4. **Korean/Bengali recognition — not started.** Candidate adapters, partial/final separation, noise/pause tests, and device/language availability reporting.
-5. **Bilingual translation and local reply agent — not started.** Select only after license and quality/latency/memory gates; add correction/clarification and bounded context.
-6. **Korean TTS and continuous session orchestration — not started.** Real voice availability, playback controls/speed, interruption, queueing, completion-to-translation and first-audio latency instrumentation.
-7. **Scenarios and learning — not started.** Reviewed scenario content, saved entries, local persistence, spaced repetition, and progress tests.
-8. **Privacy, model manager, and recovery — not started.** Verified downloads, model corruption/low-storage/OOM recovery, local deletion, and airplane-mode tests.
-9. **Quality/performance validation — not started.** Run tests/lint on CI and benchmark on clean Android 12+ devices with at least 8 GB RAM; publish measured latency and memory only.
-10. **Release readiness — not started.** Produce and install APK/AAB, verify signing, complete offline and permissions checks, publish licenses/install guide.
-
-**Release is not accepted** until actual Korean speech can be transcribed and translated into Bengali, Bengali speech can generate a suitable Korean reply, Korean audio can play, a multi-turn foreground session survives interruption/stop/restart, and the selected end-to-end pipeline is tested without network access. This first increment does not meet those criteria.
+The final voice-first acceptance journey remains: choose a situation; speak or type; see Korean recognition where supported; receive Korean↔Bangla translation; receive exactly three useful Korean reply options with Bangla meanings only from a real configured backend; play a Korean reply; save phrases; practice saved phrases; delete local history. Critical offline claims require a network-disabled end-to-end test. The current increment meets only phrasebook, typed-translation, local-saving/history, and basic self-check portions of that journey.

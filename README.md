@@ -1,23 +1,39 @@
 # K-Bridge AI
 
-A privacy-first, voice-led Korean–Bangla communication assistant for Bengali speakers in South Korea.
+A local-first Korean–Bangla communication assistant for Bengali speakers in South Korea. The repository is being built in small, verifiable increments; the current app is an installable MVP slice, **not yet the complete voice-and-AI workflow**.
 
-> **Current status: foundation preview.** This repository started with only a README. The first increment creates the Android/Compose application shell, Bengali-localized navigation, domain contracts, a tested conversation reducer, and CI. Speech capture, translation, local inference, synthesis, and persistent learning features are intentionally **not** connected yet. The app does not ask for microphone permission and does not display simulated translations or model results.
+## What works in this increment
+
+- **Offline phrasebook:** 27 bundled Korean–Bangla starter phrases across everyday, shopping, transport, health, workplace, and housing situations. The phrasebook is stored in Room on first launch and is available without downloading a model or opening a network connection.
+- **Phrase saving and review:** bookmark/unbookmark bundled phrases, save a successful translation as a phrase pair, browse by situation, and practice saved phrases in randomized Korean→Bangla / Bangla→Korean self-check flashcards. Quiz answers and learning progress are not scored or stored.
+- **Typed on-device translation:** translate Korean↔Bangla with Google ML Kit after the user explicitly approves a Wi-Fi-only model download. Translation input is passed to the on-device ML Kit translator and this app does not send it to a translation server. Model downloads require Internet access and Google Play services.
+- **Private local history:** translation-history saving is off by default. If enabled in Settings, successful typed translations are stored in the Room database on the device; the user can clear all history. Saved phrases are independent of translation-history deletion.
+- **Bengali UI strings**, Material 3 Compose screens, domain contracts/reducer, Room data layer, and GitHub Actions build checks.
+
+The bundled phrase pairs are starter content, **not professionally certified or native-editor-reviewed**. Machine translation and phrasebook wording can miss tone or context. Verify important medical, legal, financial, employment, or safety information with a qualified interpreter or trusted professional.
+
+## Not implemented yet (do not assume these work)
+
+- Foreground speech recognition or microphone capture. The app does not request microphone permission and does not save raw audio.
+- Camera capture / Korean OCR.
+- Context-aware AI replies or a hosted backend. No conversation text is sent to a generative AI service, and no API key is in the APK.
+- Korean text-to-speech playback.
+- Full multi-turn conversation orchestration, production-quality native-reviewed phrase content, and accessibility/device performance validation.
+
+The conversation screen labels these capabilities unavailable instead of displaying fabricated transcripts or replies. The app declares `INTERNET` only for the user-approved ML Kit model download; model availability checks and translation are not intended to upload typed content. Offline translation is designed to run after download, but **the complete offline path has not yet been verified across real devices**. Do not rely on it for critical communication until device and airplane-mode tests are completed.
 
 ## Project structure
 
-- `app/` — Android application, Jetpack Compose / Material 3 UI, resources, and UI tests.
-- `core/domain/` — Android-independent conversation state, bounded context, and engine contracts.
-- `docs/architecture/PLAN.md` — architecture decisions, feasible speech/model paths, validation gates, and phased roadmap.
-- `.github/workflows/android.yml` — Kotlin checks, tests, lint, debug build/artifact, and conditional signed release artifacts.
-
-The UI currently marks unavailable features clearly. Text typed into the translator screen remains in screen state; there is no network permission, audio capture, model download, or conversation database in this build.
+- `app/` — Android application, Compose UI, ML Kit translation adapter, Room database/repository, and instrumentation tests.
+- `core/domain/` — Android-independent conversation models/reducer, engine contracts, phrasebook content, quiz selection, and unit tests.
+- `docs/architecture/PLAN.md` — current implementation status, architecture, privacy boundaries, validation gates, and remaining roadmap.
+- `.github/workflows/android.yml` — Kotlin checks, unit tests, lint, debug APK, instrumentation APK compilation, optional emulator tests, and signed-release artifacts when secrets are configured.
 
 ## Requirements
 
 - JDK 17
-- Android SDK Platform 36 or newer (the latest stable installed platform is selected by default)
-- Android 12 / API 31 or newer for installation
+- Android SDK Platform 36 or newer (Gradle selects the highest stable platform installed at build time; CI selects the highest platform pre-installed on the runner)
+- Android 12 / API 31 or newer
 - Android Studio or the checked-in Gradle wrapper
 
 ## Build, test, and install
@@ -28,15 +44,27 @@ The UI currently marks unavailable features clearly. Text typed into the transla
 ./gradlew :app:lintDebug :app:assembleDebug
 ```
 
-The debug APK is written to `app/build/outputs/apk/debug/app-debug.apk`. GitHub Actions uploads it as the `k-bridge-ai-debug-apk` artifact after a successful debug build, before optional emulator tests; download it from the run’s **Artifacts** section. It is a debug-signed installable build, not a release-signed APK. Install a locally built copy on a connected Android device with:
+The debug APK is written to `app/build/outputs/apk/debug/app-debug.apk`. Install a locally built copy on a connected Android device with:
 
 ```bash
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-By default, Gradle selects the highest numbered Android platform installed in `ANDROID_HOME` / `ANDROID_SDK_ROOT`, then applies that API to both `compileSdk` and `targetSdk`. CI selects the highest platform pre-installed on the pinned runner image; if a preview platform is installed locally, pin the current stable API explicitly with `-PandroidCompileSdk=<api> -PandroidTargetSdk=<api>` or `ANDROID_COMPILE_SDK` / `ANDROID_TARGET_SDK`. If no SDK platform is installed, the development fallback is API 36. `minSdk` remains API 31.
+GitHub Actions uploads a debug APK named `k-bridge-ai-debug-apk` after the Gradle checks/build. Download it from the successful run’s **Artifacts** section. It is debug-signed, not a release-signed APK.
 
-CI always compiles the Compose instrumentation-test APK. It runs those tests on an emulator only when the runner exposes readable/writable `/dev/kvm`; on runners without hardware acceleration it reports a warning and skips emulator execution rather than timing out. Domain/app unit tests, lint, the debug build, and debug-APK upload still run.
+CI always compiles the instrumentation-test APK. It runs Android UI/storage instrumentation tests only when the runner exposes readable/writable `/dev/kvm`; without KVM it warns and skips emulator execution. A successful workflow on a host without KVM is not evidence that instrumentation tests ran.
+
+By default, Gradle selects the highest numbered Android platform installed in `ANDROID_HOME` / `ANDROID_SDK_ROOT`, then uses that API for `compileSdk` and `targetSdk`. Pin the stable API explicitly with `-PandroidCompileSdk=<api> -PandroidTargetSdk=<api>` or `ANDROID_COMPILE_SDK` / `ANDROID_TARGET_SDK` if needed. `minSdk` remains API 31.
+
+## Translation model and privacy
+
+1. Open **Translate** and enter Korean or Bangla text.
+2. If the language models are missing, review the in-app notice. Nothing downloads until you tap **Download** in that confirmation.
+3. The app requests the Korean↔Bengali ML Kit models over Wi-Fi. Download size/storage use can vary and Google Play services must be available.
+4. After the model is installed, the translator processes entered text on-device. The current feature sends no typed text or audio to a backend.
+5. Machine translation can be wrong. Confirm high-impact content with a qualified person.
+
+No model is automatically downloaded at startup. Translation history is separately opt-in and defaults to off. The local Room database contains the phrasebook, saved phrases, and—only after opt-in—translation history. Settings provides a delete-history action. Android backup is disabled in the app manifest.
 
 ## Release signing
 
@@ -47,23 +75,14 @@ A release bundle/APK is signed only when all four values are provided through th
 - `KBRIDGE_RELEASE_KEY_ALIAS`
 - `KBRIDGE_RELEASE_KEY_PASSWORD`
 
-For local builds, keep the keystore outside the repository and set those variables in the shell. Then run:
+Keep the keystore outside the repository. Then run:
 
 ```bash
 ./gradlew :app:assembleRelease :app:bundleRelease
 ```
 
-GitHub Actions uses the corresponding repository secrets `ANDROID_RELEASE_KEYSTORE_BASE64`, `ANDROID_RELEASE_STORE_PASSWORD`, `ANDROID_RELEASE_KEY_ALIAS`, and `ANDROID_RELEASE_KEY_PASSWORD`. The keystore is decoded into the runner's temporary directory; secrets are not written to the checkout. The signed AAB and APK are uploaded only when all secrets are configured. Debug builds and test/lint checks do not require signing secrets.
+GitHub Actions uses repository secrets `ANDROID_RELEASE_KEYSTORE_BASE64`, `ANDROID_RELEASE_STORE_PASSWORD`, `ANDROID_RELEASE_KEY_ALIAS`, and `ANDROID_RELEASE_KEY_PASSWORD`. Secrets are not written to the checkout. Debug builds and test/lint checks do not require signing secrets.
 
-## Current capability and privacy statement
+## Current validation limits
 
-This foundation build is **not** a translator or speech assistant yet:
-
-- No microphone permission is declared; no audio is recorded.
-- No Korean/Bengali speech engine, translation model, or chat model is loaded.
-- No system TTS adapter is connected.
-- No network service or API key is used.
-- No conversation transcript, raw audio, or saved phrase is persisted.
-- Offline inference is **not verified** and is not claimed.
-
-See the architecture plan before selecting/downloading any future model. Every model/checkpoint and redistribution must pass language-quality, latency, peak-memory, device, and license review.
+The Android instrumentation suite includes Room phrase-save/history-deletion checks and Compose UI checks. The repository’s CI host previously lacked usable `/dev/kvm`, so those tests can compile without executing. Verify the new increment on an Android 12+ device/emulator, including explicit model download, Korean↔Bangla output, loss of Wi-Fi during download, translation with networking disabled after download, and history deletion before treating offline behavior as validated.

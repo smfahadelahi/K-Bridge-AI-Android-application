@@ -23,6 +23,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -34,6 +35,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kbridge.ai.R
 import com.kbridge.ai.core.domain.conversation.TranslationDirection
 import com.kbridge.ai.ui.navigation.AppDestination
@@ -44,9 +47,27 @@ import com.kbridge.ai.ui.screens.SettingsScreen
 import com.kbridge.ai.ui.screens.TextTranslatorScreen
 
 @Composable
-fun KBridgeApp() {
+fun KBridgeApp(viewModel: KBridgeViewModel = viewModel()) {
     var selectedDestination by rememberSaveable { mutableStateOf(AppDestination.CONVERSATION) }
     var direction by rememberSaveable { mutableStateOf(TranslationDirection.KOREAN_TO_BANGLA) }
+
+    val translationState by viewModel.translationState.collectAsStateWithLifecycle()
+    val phrasebook by viewModel.phrasebook.collectAsStateWithLifecycle()
+    val savedPhrases by viewModel.savedPhrases.collectAsStateWithLifecycle()
+    val recentHistory by viewModel.recentHistory.collectAsStateWithLifecycle()
+    val rememberHistory by viewModel.rememberHistory.collectAsStateWithLifecycle()
+    val onDirectionChanged: (TranslationDirection) -> Unit = { updatedDirection ->
+        if (updatedDirection != direction) {
+            viewModel.clearTranslationResult()
+            direction = updatedDirection
+        }
+    }
+
+    LaunchedEffect(selectedDestination, direction) {
+        if (selectedDestination == AppDestination.TRANSLATE || selectedDestination == AppDestination.SETTINGS) {
+            viewModel.refreshTranslationModel(direction)
+        }
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -69,19 +90,44 @@ fun KBridgeApp() {
                 AppDestination.CONVERSATION ->
                     ConversationScreen(
                         direction = direction,
-                        onDirectionChanged = { direction = it },
+                        onDirectionChanged = onDirectionChanged,
                         onOpenTranslator = { selectedDestination = AppDestination.TRANSLATE },
                     )
 
                 AppDestination.TRANSLATE ->
                     TextTranslatorScreen(
                         direction = direction,
-                        onDirectionChanged = { direction = it },
+                        state = translationState,
+                        onDirectionChanged = onDirectionChanged,
+                        onDraftChanged = viewModel::updateDraft,
+                        onPhraseScenarioChanged = viewModel::selectPhraseScenario,
+                        onDownloadModel = { viewModel.downloadTranslationModel(direction) },
+                        onTranslate = { viewModel.translate(direction) },
+                        onSavePhrase = { viewModel.saveCurrentTranslation() },
+                        onRetryModelCheck = { viewModel.refreshTranslationModel(direction) },
                     )
 
-                AppDestination.PRACTICE -> PracticeScreen()
-                AppDestination.SAVED -> SavedScreen()
-                AppDestination.SETTINGS -> SettingsScreen()
+                AppDestination.PRACTICE ->
+                    PracticeScreen(
+                        savedPhrases = savedPhrases,
+                        onOpenSaved = { selectedDestination = AppDestination.SAVED },
+                    )
+
+                AppDestination.SAVED ->
+                    SavedScreen(
+                        phrasebook = phrasebook,
+                        savedPhrases = savedPhrases,
+                        onToggleSaved = viewModel::setPhraseSaved,
+                    )
+
+                AppDestination.SETTINGS ->
+                    SettingsScreen(
+                        translationModelStatus = translationState.modelStatus,
+                        history = recentHistory,
+                        rememberHistory = rememberHistory,
+                        onRememberHistoryChanged = viewModel::setRememberHistory,
+                        onClearHistory = viewModel::clearHistory,
+                    )
             }
         }
     }

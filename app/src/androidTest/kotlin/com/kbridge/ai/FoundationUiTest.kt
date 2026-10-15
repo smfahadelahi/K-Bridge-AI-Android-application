@@ -23,11 +23,11 @@ class FoundationUiTest {
     }
 
     @Test
-    fun translatorShowsUnavailableModelInsteadOfInventedOutput() {
+    fun translatorDoesNotEnableTranslationUntilARealModelAndInputAreReady() {
         val context = composeRule.activity
 
         composeRule.onNodeWithText(context.getString(R.string.tab_translate)).performClick()
-        composeRule.onNodeWithText(context.getString(R.string.translation_unavailable_title)).assertExists()
+        composeRule.onNodeWithText(context.getString(R.string.translator_title)).assertExists()
         composeRule.onNodeWithText(context.getString(R.string.translate_button)).assertIsNotEnabled()
     }
 }
