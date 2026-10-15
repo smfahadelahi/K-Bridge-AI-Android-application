@@ -98,7 +98,7 @@ The bundled pairs are pragmatic MVP examples rather than certified translations.
 ## 4. Roadmap / acceptance gates
 
 1. **Android foundation — complete.** Compose navigation, Bengali resources, truthful unavailable states, domain contracts/reducer, tests, and CI.
-2. **Local learning + typed translation — implemented in source; CI/device verification pending.** Room, offline phrasebook, save/delete, self-check quizzes, opt-in history/deletion, and consent-gated ML Kit model download/translation. Verify build, unit tests, Room instrumentation, translation both directions, and offline behavior.
+2. **Local learning + typed translation — implemented and CI build verified; device verification pending.** Run [38725969084](https://github.com/smfahadelahi/K-Bridge-AI-Android-application/actions/runs/38725969084) passed Kotlin checks, domain/app unit tests, lint, debug build, and instrumentation-test APK compilation. The runner lacked KVM, so Room/Compose instrumentation did not execute. Verify phrase storage on-device, translation both directions, and offline behavior.
 3. **Foreground speech input — not started.** Runtime permission, on-device-only capability reporting, partial/final separation, stop/cancel/lifecycle handling, language-resource errors, no background mic.
 4. **Korean camera OCR — not started.** Camera/photo contract, on-device Korean OCR, correction step, temporary-file deletion, permission and unsupported-device states.
 5. **AI reply service — not started.** Secure backend contract and deployment sample, HTTPS validation, server-side secrets, request/response validation, per-user rate limits and spending caps, explicit user consent, timeout/poor-connectivity handling, and no fake replies.

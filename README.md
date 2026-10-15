@@ -50,9 +50,9 @@ The debug APK is written to `app/build/outputs/apk/debug/app-debug.apk`. Install
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-GitHub Actions uploads a debug APK named `k-bridge-ai-debug-apk` after the Gradle checks/build. Download it from the successful run’s **Artifacts** section. It is debug-signed, not a release-signed APK.
+GitHub Actions uploads a debug APK named `k-bridge-ai-debug-apk` after the Gradle checks/build. Download it from the successful run’s **Artifacts** section. It is debug-signed, not a release-signed APK. The successful build for this increment is [run 38725969084](https://github.com/smfahadelahi/K-Bridge-AI-Android-application/actions/runs/38725969084); its APK artifact is available from that page.
 
-CI always compiles the instrumentation-test APK. It runs Android UI/storage instrumentation tests only when the runner exposes readable/writable `/dev/kvm`; without KVM it warns and skips emulator execution. A successful workflow on a host without KVM is not evidence that instrumentation tests ran.
+CI always compiles the instrumentation-test APK. It runs Android UI/storage instrumentation tests only when the runner exposes readable/writable `/dev/kvm`; without KVM it warns and skips emulator execution. Run 38725969084 passed Kotlin checks, unit tests, lint, debug build, and instrumentation-test APK compilation, but the Android UI/Room instrumentation tests were skipped because KVM was unavailable. A successful workflow on a host without KVM is not evidence that instrumentation tests ran.
 
 By default, Gradle selects the highest numbered Android platform installed in `ANDROID_HOME` / `ANDROID_SDK_ROOT`, then uses that API for `compileSdk` and `targetSdk`. Pin the stable API explicitly with `-PandroidCompileSdk=<api> -PandroidTargetSdk=<api>` or `ANDROID_COMPILE_SDK` / `ANDROID_TARGET_SDK` if needed. `minSdk` remains API 31.
 
@@ -85,4 +85,4 @@ GitHub Actions uses repository secrets `ANDROID_RELEASE_KEYSTORE_BASE64`, `ANDRO
 
 ## Current validation limits
 
-The Android instrumentation suite includes Room phrase-save/history-deletion checks and Compose UI checks. The repository’s CI host previously lacked usable `/dev/kvm`, so those tests can compile without executing. Verify the new increment on an Android 12+ device/emulator, including explicit model download, Korean↔Bangla output, loss of Wi-Fi during download, translation with networking disabled after download, and history deletion before treating offline behavior as validated.
+The Android instrumentation suite includes Room phrase-save/history-deletion checks and Compose UI checks. Run 38725969084 compiled the instrumentation APK but did not execute those tests because the CI host lacks usable `/dev/kvm`. Verify the increment on an Android 12+ device/emulator, including explicit model download, Korean↔Bangla output, loss of Wi-Fi during download, translation with networking disabled after download, and history deletion before treating offline behavior as validated.
