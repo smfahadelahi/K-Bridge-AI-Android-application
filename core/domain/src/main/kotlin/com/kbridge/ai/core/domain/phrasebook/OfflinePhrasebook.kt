@@ -156,8 +156,7 @@ object OfflinePhrasebook {
         korean: String,
         bangla: String,
         scenario: PhraseScenario,
-    ) =
-        PhraseEntry(
+    ) = PhraseEntry(
             id = "bundled:$id",
             korean = korean,
             bangla = bangla,
