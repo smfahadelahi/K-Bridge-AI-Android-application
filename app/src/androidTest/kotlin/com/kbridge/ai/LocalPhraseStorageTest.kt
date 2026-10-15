@@ -8,6 +8,8 @@ import com.kbridge.ai.core.domain.phrasebook.PhraseScenario
 import com.kbridge.ai.core.domain.phrasebook.TranslationHistoryEntry
 import com.kbridge.ai.data.local.KBridgeDatabase
 import com.kbridge.ai.data.repository.RoomPhraseRepository
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -15,8 +17,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.UUID
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 
 @RunWith(AndroidJUnit4::class)
 class LocalPhraseStorageTest {
