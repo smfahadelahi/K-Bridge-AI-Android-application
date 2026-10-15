@@ -11,7 +11,6 @@ import com.kbridge.ai.core.domain.phrasebook.PhraseScenario
 import com.kbridge.ai.core.domain.phrasebook.TranslationHistoryEntry
 import com.kbridge.ai.data.repository.PhraseRepository
 import com.kbridge.ai.platform.translation.MlKitTranslationEngine
-import java.util.UUID
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 class KBridgeViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: PhraseRepository = (application as KBridgeApplication).phraseRepository
@@ -248,7 +248,10 @@ class KBridgeViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun setPhraseSaved(phrase: PhraseEntry, saved: Boolean) {
+    fun setPhraseSaved(
+        phrase: PhraseEntry,
+        saved: Boolean,
+    ) {
         viewModelScope.launch {
             repository.setPhraseSaved(phrase, saved)
         }

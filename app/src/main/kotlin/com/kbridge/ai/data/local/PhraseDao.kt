@@ -22,7 +22,11 @@ interface PhraseDao {
     suspend fun upsertPhrase(phrase: PhraseEntity)
 
     @Query("UPDATE phrases SET isSaved = :saved, updatedAtEpochMillis = :updatedAt WHERE id = :id")
-    suspend fun setSaved(id: String, saved: Boolean, updatedAt: Long)
+    suspend fun setSaved(
+        id: String,
+        saved: Boolean,
+        updatedAt: Long,
+    )
 
     @Query("DELETE FROM phrases WHERE id = :id AND isBundled = 0")
     suspend fun deleteUserPhrase(id: String)

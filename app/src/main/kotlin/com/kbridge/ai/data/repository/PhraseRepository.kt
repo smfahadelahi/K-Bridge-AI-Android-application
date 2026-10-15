@@ -20,7 +20,10 @@ interface PhraseRepository {
         scenario: PhraseScenario,
     )
 
-    suspend fun setPhraseSaved(phrase: PhraseEntry, saved: Boolean)
+    suspend fun setPhraseSaved(
+        phrase: PhraseEntry,
+        saved: Boolean,
+    )
 
     suspend fun recordTranslation(entry: TranslationHistoryEntry)
 

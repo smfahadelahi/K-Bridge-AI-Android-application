@@ -9,9 +9,9 @@ import com.kbridge.ai.data.local.TranslationHistoryDao
 import com.kbridge.ai.data.local.TranslationHistoryEntity
 import com.kbridge.ai.data.local.toDomain
 import com.kbridge.ai.data.local.toEntity
-import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.util.UUID
 
 class RoomPhraseRepository(
     private val phraseDao: PhraseDao,
@@ -52,7 +52,10 @@ class RoomPhraseRepository(
         )
     }
 
-    override suspend fun setPhraseSaved(phrase: PhraseEntry, saved: Boolean) {
+    override suspend fun setPhraseSaved(
+        phrase: PhraseEntry,
+        saved: Boolean,
+    ) {
         if (!saved && !phrase.isBundled) {
             phraseDao.deleteUserPhrase(phrase.id)
         } else {
