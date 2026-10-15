@@ -55,6 +55,7 @@
     <string name="translation_quality_notice">যন্ত্র-অনুবাদ প্রসঙ্গ, ভঙ্গি বা সূক্ষ্ম অর্থ ভুল বুঝতে পারে। চিকিৎসা, আইন, অর্থ বা নিরাপত্তার গুরুত্বপূর্ণ তথ্য যোগ্য ব্যক্তির সঙ্গে নিশ্চিত করুন।</string>
     <string name="translation_saved">বাক্যপুস্তকে সংরক্ষিত</string>
     <string name="save_translation_phrase">বাক্যজোড়া সংরক্ষণ</string>
+    <string name="saving_phrase">সংরক্ষণ হচ্ছে…</string>
     <string name="save_phrase_failed">স্থানীয় সংরক্ষণে সমস্যা হয়েছে। আবার চেষ্টা করুন।</string>
     <string name="model_download_consent_title">অফলাইন অনুবাদ মডেল ডাউনলোড করবেন?</string>
     <string name="model_download_consent_body">Google ML Kit / Google Play services ব্যবহার করে Wi‑Fi দিয়ে কোরিয়ান ও বাংলা মডেল ডাউনলোড করে এই ডিভাইসে রাখা হবে। ফাইলের আকার ও স্টোরেজ ব্যবহার ভিন্ন হতে পারে। অনুবাদের জন্য কোনো টাইপ করা বাক্য বা অডিও পাঠানো হয় না। ডাউনলোডে সম্মত হলেই এগিয়ে যান।</string>
@@ -94,6 +95,9 @@
     <string name="phrasebook_filter_saved">সংরক্ষিত</string>
     <string name="phrasebook_loading_title">স্থানীয় বাক্যপুস্তক লোড হচ্ছে</string>
     <string name="phrasebook_loading_body">বান্ডেল করা প্রাথমিক বাক্য স্থানীয় ডেটাবেসে যোগ করা হচ্ছে।</string>
+    <string name="phrasebook_initialization_error_title">অফলাইন বাক্যপুস্তক প্রস্তুত করা যায়নি</string>
+    <string name="phrasebook_initialization_error_body">বান্ডেল করা প্রাথমিক বাক্য স্থানীয় স্টোরেজে যোগ করা যায়নি। কিছুই কোথাও পাঠানো হয়নি। আবার চেষ্টা করুন।</string>
+    <string name="retry_phrasebook_initialization">সেটআপ আবার চেষ্টা করুন</string>
     <string name="phrasebook_no_matches_title">এই বিভাগে কোনো বাক্য নেই</string>
     <string name="phrasebook_no_matches_body">অন্য পরিস্থিতি বাছুন অথবা সব বাক্য দেখুন।</string>
     <string name="save_phrase">বাক্য সংরক্ষণ করুন</string>
@@ -127,7 +131,10 @@
     <string name="history_privacy_body">ইতিহাস ডিফল্টভাবে বন্ধ। চালু করলে উৎস ও অনূদিত লেখা Room-এ স্থানীয়ভাবে থাকে; এই সুবিধায় আপলোড হয় না। মুছে না ফেলা পর্যন্ত পুরোনো এন্ট্রি থাকবে।</string>
     <string name="history_opt_in_label">ভবিষ্যতের অনুবাদ সংরক্ষণ করুন</string>
     <string name="history_empty">কোনো অনুবাদ ইতিহাস সংরক্ষিত নেই।</string>
-    <string name="history_recent_limit">স্থানীয় ডেটাবেসে সর্বোচ্চ %1$dটি সাম্প্রতিক এন্ট্রি থাকে; এখানে শুধু উপরের পাঁচটি দেখা যায়।</string>
+    <string name="history_recent_limit">এখানে লোড করা সর্বশেষ %1$dটি ইতিহাসের মধ্যে পাঁচটি দেখানো হচ্ছে।</string>
+    <string name="storage_error_phrase_update">সংরক্ষিত বাক্যটি হালনাগাদ করা যায়নি। আবার চেষ্টা করুন।</string>
+    <string name="storage_error_history_save">অনুবাদ সফল হয়েছে, কিন্তু ইতিহাসের এন্ট্রি সংরক্ষণ করা যায়নি।</string>
+    <string name="storage_error_history_delete">অনুবাদ ইতিহাস মুছে ফেলা যায়নি। আবার চেষ্টা করুন।</string>
     <string name="clear_history_button">সব অনুবাদ ইতিহাস মুছুন</string>
     <string name="clear_history_confirmation_title">অনুবাদ ইতিহাস মুছবেন?</string>
     <string name="clear_history_confirmation_body">এতে স্থানীয়ভাবে রাখা সব অনুবাদ ইতিহাস স্থায়ীভাবে মুছে যাবে। সংরক্ষিত বাক্য মুছবে না।</string>
